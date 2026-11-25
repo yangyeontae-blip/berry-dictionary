@@ -49,6 +49,8 @@ export function firstLetterSteps(word: string) {
 // 사전에 실린 기본형 후보를 알려 준다. 완벽한 형태 분석기가 아니라, 사전에 실제로 있는 낱말만 후보로 보여 준다.
 
 const ENDINGS = [
+  '기로','기를','기는','기도','기가',
+  '느라고','느라','으려고','려고','으면서','면서','었지만','았지만','었으면','았으면','겠어요','겠다','네요','는구나','구나','었던','았던','던','을까요','ㄹ까요','을까','ㄹ까','을래','ㄹ래','지요','죠','거든요','으러','러','는다','ㄴ다',
   '었습니다','았습니다','였습니다','겠습니다','습니다','ㅂ니다',
   '었어요','았어요','였어요','어요','아요','여요','에요','예요','이에요','세요','셨어요','으세요',
   '었다','았다','였다','었고','았고','었는데','았는데','는데','은데','ㄴ데',
@@ -124,7 +126,8 @@ export function baseFormHints(form: string, has: (w: string) => boolean): string
   const word = form.trim();
   if (!word || has(word)) return [];
   const found: string[] = [];
-  for (const stem of stemCandidates(word)) {
+  // 줄기와 '-아/-어'가 하나로 합쳐진 꼴(놀라, 가, 서)은 그대로 '-다'를 붙여 본다.
+  for (const stem of [...stemCandidates(word), word]) {
     const w = stem + '다';
     if (w !== word && has(w) && !found.includes(w)) found.push(w);
   }

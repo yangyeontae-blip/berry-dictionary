@@ -16,5 +16,8 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^6.4.6"
+  },
+  "dependencies": {
+    "qrcode-generator": "^1.4.4"
   }
 }

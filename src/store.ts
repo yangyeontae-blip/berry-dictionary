@@ -1,9 +1,10 @@
 // 아이 기록은 이 기기(브라우저)에만 저장한다. 서버로 보내지 않는다.
 const KEY = 'berry-dictionary-v1';
-export type Saved = {w: string; n: number; k: number; at: number};
-export type State = {pouch: Saved[]; stamps: number; found: string[]; sound: boolean; guesses: number};
+/** my: 내가 지은 문장, ctx·sense: 글 속에서 찾은 문장과 고른 뜻(낱말 공책). */
+export type Saved = {w: string; n: number; k: number; at: number; my?: string; ctx?: string; sense?: string};
+export type State = {pouch: Saved[]; stamps: number; found: string[]; sound: boolean; guesses: number; games: number; notes: number; best: number};
 
-const blank = (): State => ({pouch: [], stamps: 0, found: [], sound: true, guesses: 0});
+const blank = (): State => ({pouch: [], stamps: 0, found: [], sound: true, guesses: 0, games: 0, notes: 0, best: 0});
 
 export function loadState(storage: Pick<Storage, 'getItem'> | null = safeStorage()): State {
   try {

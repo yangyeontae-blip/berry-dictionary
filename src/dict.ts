@@ -3,8 +3,9 @@ import {bare, initials, isInitialQuery, baseFormHints} from './hangul';
 
 export type Sense = {d: string; x?: string[]; t?: string[]; s?: string[]; a?: string[]; h?: string[]; l?: string[]; b?: string[]; m?: string[]; j?: string[]; o?: string[]; r?: string[]; f?: string[]; w?: string[]};
 export type Entry = {i: number; w: string; n: number; p: string; u: string; lv: number; s: Sense[]; o?: string; pr?: string; c?: string; a?: string};
-export type Row = {k: number; w: string; n: number; p: string; lv: number};
-type Index = {chunk: number; count: number; pos: string[]; source: string; words: [string, number, number, number][]};
+/** x: 1이면 아이 놀이(찾기 놀이·오늘의 낱말·놀이터)에서 빼는 낱말(술·담배 등). 검색은 된다. */
+export type Row = {k: number; w: string; n: number; p: string; lv: number; x: number};
+type Index = {chunk: number; count: number; pos: string[]; source: string; words: [string, number, number, number, number?][]};
 
 const BASE = (import.meta as {env?: {BASE_URL?: string}}).env?.BASE_URL ?? '/';
 
@@ -20,11 +21,12 @@ export class Dictionary {
   async load() {
     const idx = await this.fetcher('data/index.json') as Index;
     this.chunk = idx.chunk; this.source = idx.source;
-    this.rows = idx.words.map(([w, n, p, lv], k) => ({k, w, n, p: idx.pos[p] ?? '', lv}));
+    this.rows = idx.words.map(([w, n, p, lv, x], k) => ({k, w, n, p: idx.pos[p] ?? '', lv, x: x ?? 0}));
     for (const r of this.rows) { const key = bare(r.w); const list = this.byWord.get(key); if (list) list.push(r.k); else this.byWord.set(key, [r.k]); }
     return this;
   }
-  has = (w: string) => this.byWord.has(w);
+  /** 사전에 실린 낱말인가(‘놀라-’ 같은 붙임표 조각만 있으면 아니다 — 그래야 ‘놀라’ → ‘놀라다’로 안내한다). */
+  has = (w: string) => (this.byWord.get(w) ?? []).some(k => !this.rows[k].w.includes('-'));
   /** 같은 모양 낱말(동음이의어) 모두 */
   same(w: string) { return (this.byWord.get(bare(w)) ?? []).map(k => this.rows[k]); }
 
