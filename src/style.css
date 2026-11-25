@@ -165,7 +165,7 @@ img{user-select:none}
 .quiz-options button b{display:inline-grid;place-items:center;width:28px;height:28px;margin-right:6px;border-radius:50%;background:var(--leaf);color:#fff}
 .quiz-options .right{border-color:var(--leaf);background:var(--leaf-soft)}.quiz-options .wrong{border-color:#f3a3b8;background:#fff1f4;animation:shake .35s}
 .note{font-size:14.5px;color:var(--ink-soft);padding:10px 14px;border-radius:12px;background:#f6efe1}
-.page-turn{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:10px}
+.page-turn{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-top:14px;gap:8px}
 .page-turn button{padding:10px 18px;border-radius:999px;border:3px solid #ecd3a3;background:#fffaf0;font:700 17px var(--brand);box-shadow:0 3px 0 #d9b77d}
 .page-turn button:disabled{opacity:.4;cursor:default}
 .page-no{font:700 15px var(--brand);color:var(--ink-soft)}

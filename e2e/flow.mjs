@@ -20,7 +20,7 @@ await p.fill('#q', 'ㄷㅈㅎㄷ'); await p.waitForSelector('.result-list'); ass
 // 찾기 놀이 5문제
 await p.goto(URL + '#hunt'); await p.waitForSelector('.steps');
 for (let round = 0; round < 5; round++) {
-  for (let guard = 0; guard < 40; guard++) {
+  for (let guard = 0; guard < 80; guard++) {
     const info = await p.evaluate(() => { const t = document.querySelector('.target')?.textContent; return {t, ask: !!document.querySelector('[data-ans]'), pick: !!document.querySelector('[data-pick]'), found: !!document.querySelector('.found')}; });
     if (info.found) break;
     if (info.ask) {
@@ -39,7 +39,7 @@ for (let round = 0; round < 5; round++) {
     if (info.pick) {
       const k = await p.evaluate(() => { const t = document.querySelector('.target').textContent.trim(); const b = [...document.querySelectorAll('[data-pick]')].find(b => b.querySelector('b').firstChild.textContent === t); return b ? b.dataset.pick : null; });
       if (k) { await p.click(`[data-pick="${k}"]`); await p.waitForSelector('.found'); break; }
-      await p.click('[data-turn]:not([disabled]) >> nth=-1'); await p.waitForTimeout(250); continue;
+      await p.click('[aria-label="다음 쪽"]'); await p.waitForTimeout(250); continue;
     }
   }
   assert.ok(await p.$('.found'), 'round ' + round + ' found');

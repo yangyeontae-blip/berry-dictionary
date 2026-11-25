@@ -124,7 +124,9 @@ function pageList(k: number, size: number) {
   return {rows: dict.rows.slice(start, start + size), start};
 }
 function pageNav(start: number, size: number, target: string) {
-  return `<div class="page-turn"><button data-turn="${Math.max(0, start - size)}" ${start === 0 ? 'disabled' : ''} aria-label="앞 쪽">◀ 앞 쪽</button><span class="page-no">${Math.floor(start / size) + 1}쪽</span><button data-turn="${start + size}" ${start + size >= dict.rows.length ? 'disabled' : ''} aria-label="다음 쪽">다음 쪽 ▶</button></div>`.replace(/data-turn/g, `data-target="${target}" data-turn`);
+  const last = dict.rows.length - 1, jump = size * 10;
+  const btn = (to: number, label: string, aria: string, off: boolean) => `<button data-target="${target}" data-turn="${Math.max(0, Math.min(Math.floor(last / size) * size, to))}" ${off ? 'disabled' : ''} aria-label="${aria}">${label}</button>`;
+  return `<div class="page-turn">${btn(start - jump, '◀◀', '앞으로 10쪽', start === 0)}${btn(start - size, '◀ 앞 쪽', '앞 쪽', start === 0)}<span class="page-no">${Math.floor(start / size) + 1}쪽</span>${btn(start + size, '다음 쪽 ▶', '다음 쪽', start + size > last)}${btn(start + jump, '▶▶', '뒤로 10쪽', start + size > last)}</div>`;
 }
 function wireTurns(onTurn: (start: number) => void) {
   app.querySelectorAll<HTMLButtonElement>('[data-turn]').forEach(b => b.onclick = () => { chime(); app.querySelector('.page-left')?.classList.add('flip'); onTurn(+b.dataset.turn!); });
@@ -263,10 +265,13 @@ function huntView() {
     left = head + bbo('bbo-magnify.png', `‘${esc(word[0])}’ 아래에<br><b>받침</b>이 있나요?`);
     right = `${huntSteps(h)}<h3 class="ask">받침을 골라요</h3><div class="choice-grid jong">${finals.map(c => `<button class="choice" data-ans="${c || '없음'}">${c || '없음'}</button>`).join('')}</div><p class="tip-text">${img('ic-leaf.png', 'leaf')}받침이 없는 글자가 받침 있는 글자보다 먼저 나와요.</p>`;
   } else {
-    const size = 8, first = dict.firstIndexOf(s.syllable);
+    // 첫 글자만으로는 수백 쪽이 될 수 있어, 둘째 글자의 첫 자음까지 맞춘 쪽을 펼친다(실제 사전에서 둘째 글자 차례로 좁혀 가는 방법).
+    const size = 8, second = word[1] ? split(word[1]) : null;
+    const near = second ? word[0] + join({cho: second.cho, jung: 0, jong: 0}) : s.syllable;
+    const first = dict.firstIndexOf(near);
     h.page ??= Math.floor(first / size) * size;
     const rows = dict.rows.slice(h.page, h.page + size), [g1, g2] = guideOf(rows);
-    left = head + bbo('bbo-read.png', `‘${esc(s.syllable)}’ 쪽을 펼쳤어요!<br>머리 낱말을 보고 쪽을 넘겨 찾아요.`);
+    left = head + bbo('bbo-read.png', second ? `‘${esc(s.syllable)}’ 다음 글자가<br>‘${CHO[second.cho]}’로 시작하는 쪽이에요.<br>머리 낱말을 보고 쪽을 넘겨요!` : `‘${esc(s.syllable)}’ 쪽을 펼쳤어요!<br>머리 낱말을 보고 쪽을 넘겨 찾아요.`);
     right = `${huntSteps(h)}<div class="guide-words"><span>${img('ic-leaf.png', 'leaf')}${esc(g1)}</span><span>${esc(g2)}${img('ic-leaf.png', 'leaf flip')}</span></div>
       <ol class="page-words hunt-page">${rows.map(r => `<li><button class="row" data-pick="${r.k}"><b>${esc(bare(r.w))}${dict.same(r.w).length > 1 ? `<sup>${r.n}</sup>` : ''}</b><span class="kind kind-${kindOf(r.p).color}">${esc(kindOf(r.p).kid)}</span></button></li>`).join('')}</ol>
       ${pageNav(h.page, size, 'h')}`;
