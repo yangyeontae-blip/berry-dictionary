@@ -1,0 +1,20 @@
+{
+  "name": "berry-dictionary",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "베리의 숲 국어사전 — 초등 3학년이 국어사전 찾는 법을 놀이로 익히는 웹 사전",
+  "scripts": {
+    "data": "python -I scripts/build-data.py",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --import tsx --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.10",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^6.4.6"
+  }
+}
