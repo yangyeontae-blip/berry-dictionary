@@ -5,6 +5,7 @@ import {loadState, saveState, inPouch, togglePouch, stampFound, encodeList, deco
 import {pickHuntTargets, findChangedForm, type HuntTarget} from './hunt';
 import qrcode from 'qrcode-generator';
 import {BASKETS, basketOf, pickSortRound, pickOrderRound, pickPairRound, pickHonorRound, shuffle, type BasketKey, type Pair} from './games';
+import {UNIT5, lessonOf, ORDER_CHART, TEXTBOOK_SORT, STORIES, WRAP_QUIZ, clueOf, type Lesson} from './textbook';
 
 const ART = import.meta.env.BASE_URL + 'art/';
 const app = document.getElementById('app')!;
@@ -70,7 +71,7 @@ function tabs(list: readonly string[], side: string, active?: string, offset = 0
   return `<nav class="tabs tabs-${side}" aria-label="첫 자음으로 펼치기">${list.map((c, i) => `<button class="tab${c === active ? ' on' : ''}" style="--tab:${TAB_COLORS[(i + offset) % 7]}" data-cho="${c}" aria-label="${c}으로 시작하는 쪽 펼치기">${c}</button>`).join('')}</nav>`;
 }
 function frame(v: View) {
-  const nav = [['', '찾기', 'ic-magnify.png'], ['hunt', '찾기 놀이', 'ic-hunt.png'], ['read', '글 속 낱말', 'ic-read.png'], ['play', '놀이터', 'ic-play.png'], ['pouch', '낱말 공책', 'ic-notebook.png']];
+  const nav = [['', '찾기', 'ic-magnify.png'], ['unit5', '교과서 길', 'ic-book.png'], ['hunt', '찾기 놀이', 'ic-hunt.png'], ['read', '글 속 낱말', 'ic-read.png'], ['play', '놀이터', 'ic-play.png'], ['pouch', '낱말 공책', 'ic-notebook.png']];
   app.innerHTML = `
   <div class="scene" data-mode="${v.mode}">
     <header class="sign"><a href="#" class="sign-board" aria-label="첫 화면으로">${img('sign.png', 'sign-art')}<span class="sign-title">베리의 숲 국어사전</span></a>
@@ -375,7 +376,8 @@ function teacher() {
     <label class="field">글<textarea id="text-body" rows="6" maxlength="1200" placeholder="여기에 글을 붙여 넣어 주세요."></textarea></label>
     <button class="big-button cream" id="sample-text">예시 글 넣어 보기</button><button class="big-button leaf" id="make-text">글 주소 만들기</button><div class="share share-text" hidden></div></section>
     <p class="tip-text">낱말과 글은 서버에 저장하지 않고 주소 안에만 담겨요. 아이 기록은 각 기기에만 남아요.</p>`,
-  right: `<section class="t-card lesson"><h3>40분 수업 흐름 예시</h3><ol>${LESSON.map(([t, what, to, code]) => `<li><b>${t}</b><span>${what} <em class="code">${code}</em></span><a href="${to}">열기 ▸</a></li>`).join('')}</ol></section>
+  right: `<a class="big-button leaf" href="#unit5">${img('ic-book.png', 'btn-icon')}교과서 길: 국어 3-2 나 5단원 13차시별 활동 ▸</a>
+    <section class="t-card lesson"><h3>40분 수업 흐름 예시</h3><ol>${LESSON.map(([t, what, to, code]) => `<li><b>${t}</b><span>${what} <em class="code">${code}</em></span><a href="${to}">열기 ▸</a></li>`).join('')}</ol></section>
     <div class="check-list"><p class="tip-text">${img('bbo-read.png', 'hint-bbo')}낱말을 적으면 사전에 있는지 바로 살펴 드려요.</p></div>
     ${offlineBox()}`});
   wireOffline();
@@ -413,7 +415,7 @@ function playHub() {
     ${titleTrack()}`,
   right: `<div class="game-cards">${GAMES.map(g => `<div class="game-card gc-${g.color}"><a href="#${g.to}" class="game-main">${img(g.art, 'game-art')}<span><b>${g.title}</b><small>${g.sub}</small></span><em class="code">${g.code}</em></a>${g.also ? `<a href="#${g.also[0]}" class="game-also">${g.also[1]} ▸</a>` : ''}</div>`).join('')}</div>`});
 }
-const PRAISE: Record<string, string> = {sort: '바구니 정리왕!', order: '줄 세우기 박사!', 'pair-a': '반대말 탐정!', 'pair-s': '비슷한말 탐정!', honor: '예절 왕!'};
+const PRAISE: Record<string, string> = {'sort-tb': '교과서 낱말 정리왕!', 'sort-my': '나만의 기준 발견!', clue: '단서 탐정!', wrap: '5단원 마무리 완료!', sort: '바구니 정리왕!', order: '줄 세우기 박사!', 'pair-a': '반대말 탐정!', 'pair-s': '비슷한말 탐정!', honor: '예절 왕!'};
 const TITLES: [number, string][] = [[5, '새싹 탐험가'], [10, '산딸기 탐험가'], [20, '숲속 사전 박사'], [30, '베리숲 사전왕']];
 /** 도장이 5·10·20·30개가 되는 순간 칭호를 준다. */
 function titleGet() { const t = TITLES.find(([n]) => n === state.stamps); return t ? `<p class="title-get">${img('bbo-cheer.png', 'title-bbo')}<span>새 칭호를 얻었어요!<br><b>${t[1]}</b></span></p>` : ''; }
@@ -434,6 +436,11 @@ function wireAgain() { app.querySelectorAll<HTMLButtonElement>('[data-again]').f
 let pairsCache: Pair[] | null = null;
 async function playGame(kind: string) {
   if (kind === 'sort') return sortGame();
+  if (kind === 'sort-tb') return sortGame(true);
+  if (kind === 'sort-my') return sortMyGame();
+  if (kind === 'clue') return clueGame();
+  if (kind === 'clue-make') return clueMake();
+  if (kind === 'wrap') return wrapGame();
   if (kind === 'order') return orderGame(1);
   if (kind === 'pair-a' || kind === 'pair-s') {
     pairsCache ??= await fetch(import.meta.env.BASE_URL + 'data/pairs.json').then(r => r.json()).catch(() => null);
@@ -447,16 +454,16 @@ const gameHead = (title: string, _code: string, bubble: string, pose = 'bbo-thin
 const shake = (b: Element) => { b.classList.add('wrong'); setTimeout(() => b.classList.remove('wrong'), 400); };
 
 // 낱말 바구니: 카드를 고르고 바구니를 누른다(끌어 놓기 없이 누르기만으로 — 태블릿·휴대폰에서도 쉽게).
-function sortGame() {
-  const cards = pickSortRound(dict.rows, 6);
+function sortGame(textbook = false) {
+  const cards = pickSortRound(dict.rows, 6, Math.random, textbook ? TEXTBOOK_SORT : undefined);
   const placed = new Map<number, BasketKey>(), miss = new Map<number, number>(); let picked: number | null = null;
   const draw = () => {
     const left = cards.filter(c => !placed.has(c.k));
     const baskets = `<div class="baskets">${BASKETS.map(b => `<button class="basket bk-${b.color}" data-basket="${b.key}">${img('ic-basket.png', 'basket-art')}<b>${b.label}</b><span class="in">${cards.filter(c => placed.get(c.k) === b.key).map(c => `<i>${esc(bare(c.w))}</i>`).join('')}</span></button>`).join('')}</div>`;
     frame({mode: 'play-sort',
-      left: gameHead('낱말 바구니', '[4국04-02]', !left.length ? '바구니에<br>다 담았어요!' : picked === null ? '낱말 카드를 하나 누르고,<br>알맞은 <b>바구니</b>를 눌러요!' : `‘${esc(bare(dict.rows[picked].w))}’는<br>어느 바구니에 담을까?`, 'bbo-basket.png') +
+      left: gameHead(textbook ? '교과서 낱말 바구니' : '낱말 바구니', '[4국04-02]', !left.length ? '바구니에<br>다 담았어요!' : picked === null ? '낱말 카드를 하나 누르고,<br>알맞은 <b>바구니</b>를 눌러요!' : `‘${esc(bare(dict.rows[picked].w))}’는<br>어느 바구니에 담을까?`, 'bbo-basket.png') +
         `<div class="sort-cards">${left.map(c => `<button class="word-chip${c.k === picked ? ' on' : ''}" data-card="${c.k}">${esc(bare(c.w))}</button>`).join('')}</div>`,
-      right: left.length ? baskets + `<p class="tip-text">${img('ic-leaf.png', 'leaf')}<span class="kind-guide"><span><i class="dot berry"></i><b>이름</b>: 부를 수 있는 것(사과, 친구)</span><span><i class="dot leaf"></i><b>움직임</b>: ‘지금 ○○한다’가 말이 되는 것(달린다)</span><span><i class="dot sky"></i><b>모양·성질</b>: 어떤지 말하는 것(예쁘다, 차갑다)</span></span></p>` : baskets + gameDone('sort', cards.map(c => c.w))});
+      right: left.length ? baskets + `<p class="tip-text">${img('ic-leaf.png', 'leaf')}<span class="kind-guide"><span><i class="dot berry"></i><b>이름</b>: 부를 수 있는 것(사과, 친구)</span><span><i class="dot leaf"></i><b>움직임</b>: ‘지금 ○○한다’가 말이 되는 것(달린다)</span><span><i class="dot sky"></i><b>모양·성질</b>: 어떤지 말하는 것(예쁘다, 차갑다)</span></span></p>` : baskets + gameDone(textbook ? 'sort-tb' : 'sort', cards.map(c => c.w))});
     wireAgain();
     app.querySelectorAll<HTMLButtonElement>('[data-card]').forEach(b => b.onclick = () => { chime(); picked = +b.dataset.card!; draw(); });
     app.querySelectorAll<HTMLButtonElement>('[data-basket]').forEach(b => b.onclick = () => {
@@ -696,6 +703,171 @@ function wireSentence(e: Entry, k: number) {
 const clock = (ms: number) => { const s = Math.floor(ms / 1000); return s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`; };
 setInterval(() => { const t = document.querySelector('.timer'); if (t && hunt) t.textContent = clock(Date.now() - hunt.t0); }, 1000);
 
+// ── 교과서 길: 국어 3-2 나 5단원 「사전으로 여는 세상」 13차시를 이 앱으로 ──
+const wordLink = (w: string) => { const base = dict.has(w) ? w : dict.baseForms(w)[0]; const r = base ? dict.same(base)[0] : undefined; return r ? `<a class="rel-word" href="#w/${r.k}">${esc(w)}</a>` : ''; };
+const goHref = (to: string) => to.startsWith('list=') ? '#' + to : '#' + to;
+function unit5Page(id = '') {
+  const cur: Lesson | null = id ? lessonOf(id) : null;
+  const path = `<ol class="unit-path">${UNIT5.map(l => `<li><a href="#unit5/${l.id}" class="unit-stop${cur?.id === l.id ? ' on' : ''}"><span class="unit-no">${l.no}</span><span class="unit-title">${esc(l.title)}<small>${esc(l.book)}</small></span></a></li>`).join('')}</ol>`;
+  const detail = cur ? `<div class="unit-card">
+      <span class="ribbon small">${cur.no}차시</span>
+      <h2 class="page-title">${esc(cur.title)}</h2>
+      <p class="unit-book">${img('ic-book.png', 'leaf')}${esc(cur.book)}${cur.act ? ` · ${esc(cur.act)}` : ''}</p>
+      <p class="bubble unit-goal">${esc(cur.goal)} <em class="code">${cur.code}</em></p>
+      <div class="unit-go">${cur.go.map(g => `<a class="big-button ${g.to.startsWith('play') ? 'leaf' : 'honey'}" href="${goHref(g.to)}">${img(g.icon, 'btn-icon')}${esc(g.label)} <span aria-hidden="true">▸</span></a>`).join('')}</div>
+      ${cur.words?.length ? `<h3 class="ask">교과서에 나온 낱말 사전에서 찾아보기</h3><div class="rel">${cur.words.map(wordLink).join('')}</div>
+      <a class="big-button cream" href="#list=${encodeList(`${cur.no}차시 교과서 낱말`, cur.words.filter(w => dict.has(w) || dict.baseForms(w).length).slice(0, 10))}">${img('ic-hunt.png', 'btn-icon')}이 낱말들로 찾기 놀이</a>` : ''}
+    </div>` : `<div class="peek">${img('bbo-read.png', 'peek-bbo')}<p class="bubble">국어 3-2 나<br><b>5. 사전으로 여는 세상</b><br>차시를 골라 봐요!</p></div>
+    <p class="tip-text">${img('ic-leaf.png', 'leaf')}차시마다 교과서 쪽수와 바로 할 수 있는 활동을 모아 두었어요. 교과서와 나란히 펴 놓고 함께 써요.</p>`;
+  frame({mode: 'unit5', left: `<div class="guide-words"><span>${img('ic-leaf.png', 'leaf')}교과서 길</span><span>5단원 · 13차시${img('ic-leaf.png', 'leaf flip')}</span></div>${path}`, right: detail});
+}
+
+// 7~8차시: 교과서 붙임 11 '사전에 싣는 순서'
+function chartPage() {
+  const row = (title: string, list: string[]) => `<h3 class="ask">${title}</h3><div class="chart-row">${list.map(c => `<span>${c}</span>`).join('')}</div>`;
+  frame({mode: 'unit5', left: `<div class="guide-words"><span>${img('ic-leaf.png', 'leaf')}사전에 싣는 순서</span><span>7~8차시${img('ic-leaf.png', 'leaf flip')}</span></div>
+    ${row('① 첫 자음자', ORDER_CHART.cho)}${row('② 모음자', ORDER_CHART.jung)}${row('③ 받침', ORDER_CHART.jong)}`,
+  right: `<div class="hunt-bbo">${img('bbo-magnify.png', 'hunt-bbo-art')}<p class="bubble">첫 자음자가 같으면 <b>모음자</b>,<br>모음자도 같으면 <b>받침</b>을 봐요.<br>받침이 없는 글자가 먼저예요!</p></div>
+    <p class="tip-text">${img('ic-leaf.png', 'leaf')}예: ‘하교’와 ‘학문’ — ‘하’에는 받침이 없어서 ‘하교’가 먼저 나와요.</p>
+    <div class="unit-go"><a class="big-button honey" href="#play/order">${img('ic-order.png', 'btn-icon')}사전 차례 줄 세우기 ▸</a><a class="big-button leaf" href="#hunt">${img('ic-hunt.png', 'btn-icon')}사전 찾기 놀이 ▸</a><a class="big-button cream" href="#unit5/7">교과서 길로 돌아가기</a></div>`});
+}
+
+// 9~10차시: 베리숲 읽기 글(새로 쓴 글) 고르기 → 글 속 낱말 찾기
+function storiesPage() {
+  frame({mode: 'unit5', left: `<div class="guide-words"><span>${img('ic-leaf.png', 'leaf')}베리숲 읽기 글</span><span>9~10차시${img('ic-leaf.png', 'leaf flip')}</span></div>
+    <div class="hunt-bbo">${img('bbo-read.png', 'hunt-bbo-art')}<p class="bubble">글을 읽다 모르는 낱말이 나오면<br>① 뜻을 <b>짐작</b>하고<br>② <b>사전</b>으로 확인해요!</p></div>`,
+  right: `<div class="game-cards">${STORIES.map(s => `<div class="game-card gc-honey"><a class="game-main" href="#read=${encodeText(s.t, s.x)}">${img('ic-read.png', 'game-art')}<span><b>${esc(s.t)}</b><small>${esc(s.x.slice(0, 38))}…</small></span></a></div>`).join('')}</div>
+    <a class="big-button cream" href="#unit5/9">교과서 길로 돌아가기</a>`});
+}
+
+// 11~12차시: 나만의 국어사전 — 낱말 공책을 사전 쪽처럼 인쇄
+async function myDictPage() {
+  const list = state.pouch.slice(0, 24);
+  const entries = await Promise.all(list.map(p => dict.entry(p.k).catch(() => null)));
+  const items = list.map((p, i) => ({p, e: entries[i]})).filter(x => x.e).sort((a, b) => a.p.k - b.p.k);
+  const card = ({p, e}: {p: Saved; e: Entry | null}) => `<article class="mydict-entry"><h4>${esc(bare(e!.w))}${dict.same(e!.w).length > 1 ? `<sup>${e!.n}</sup>` : ''}${e!.pr ? ` <span class="pron">[${esc(e!.pr.replace(/ː/g, ':'))}]</span>` : ''} <span class="kind kind-${kindOf(e!.p).color}">${esc(kindOf(e!.p).kid)}</span></h4>
+    <p>${esc(p.sense ?? e!.s[0].d)}</p>${p.my ? `<p class="mine">내 문장: ${esc(p.my)}</p>` : e!.s[0].x?.[0] ? `<p class="ex">예: ${esc(e!.s[0].x[0])}</p>` : ''}</article>`;
+  frame({mode: 'unit5', left: `<div class="guide-words"><span>${img('ic-leaf.png', 'leaf')}나만의 국어사전</span><span>${items.length}낱말${img('ic-leaf.png', 'leaf flip')}</span></div>
+    ${items.length ? `<p class="tip-text">${img('ic-leaf.png', 'leaf')}<span>낱말 공책에 담은 낱말이 <b>사전 차례대로</b> 정리됐어요. 표제어·발음·낱말 종류·뜻·예문이 들어간 진짜 사전 쪽이에요.</span></p>
+      <div class="unit-go"><button class="big-button leaf" data-print>${img('ic-notebook.png', 'btn-icon')}A4로 인쇄하기</button></div>` : `<p class="empty">${img('bbo-sleep.png', 'empty-bbo')}<span>낱말 공책이 비어 있어요.<br>낱말을 찾고 ‘주머니에 담기’를 눌러 모아 보세요.</span></p>`}
+    <a class="big-button cream" href="#unit5/11">교과서 길로 돌아가기</a>`,
+  right: `<div class="mydict-sheet" id="mydict-sheet"><h3 class="mydict-title">나만의 국어사전</h3>${items.map(card).join('')}</div>`});
+  app.querySelector<HTMLButtonElement>('[data-print]')?.addEventListener('click', () => window.print());
+}
+
+// 5~6차시: 내가 기준을 정해 나누기(정답 없음 — 기준을 말로 설명하는 것이 목표)
+function sortMyGame() {
+  const words = shuffle(['기쁨', '슬픔', '사랑', '두려움', '설레다', '괴롭다', '흐르다', '초콜릿', '침대', ...shuffle([...TEXTBOOK_SORT.name]).slice(0, 3)]).slice(0, 10);
+  const names = ['', ''], placed = new Map<string, number>(); let picked: string | null = null, named = false;
+  const draw = () => {
+    const left = words.filter(w => !placed.has(w));
+    if (!named) {
+      frame({mode: 'play-sort', left: gameHead('내 기준으로 나누기', '[4국04-02]', '낱말을 두 무리로 나눌<br><b>기준</b>을 정해 봐요!', 'bbo-think.png') + `<div class="sort-cards">${words.map(w => `<span class="word-chip">${esc(w)}</span>`).join('')}</div>`,
+        right: `<p class="tip-text">${img('ic-leaf.png', 'leaf')}예: ‘마음을 나타내는 말 / 물건을 나타내는 말’, ‘-다로 끝나는 말 / 아닌 말’</p>
+          <label class="field">첫째 바구니 이름<input id="b0" maxlength="16" placeholder="예: 마음을 나타내는 말"></label>
+          <label class="field">둘째 바구니 이름<input id="b1" maxlength="16" placeholder="예: 물건을 나타내는 말"></label>
+          <div class="next-row"><button class="big-button leaf" data-start>나누기 시작 ▸</button></div>`});
+      app.querySelector<HTMLButtonElement>('[data-start]')!.onclick = () => {
+        names[0] = app.querySelector<HTMLInputElement>('#b0')!.value.trim(); names[1] = app.querySelector<HTMLInputElement>('#b1')!.value.trim();
+        if (!names[0] || !names[1]) return toast('바구니 이름을 두 개 모두 적어 주세요.');
+        named = true; chime('ok'); draw();
+      };
+      return;
+    }
+    const baskets = `<div class="baskets two">${names.map((n, i) => `<button class="basket bk-${i ? 'sky' : 'berry'}" data-basket="${i}">${img('ic-basket.png', 'basket-art')}<b>${esc(n)}</b><span class="in">${words.filter(w => placed.get(w) === i).map(w => `<i>${esc(w)}</i>`).join('')}</span></button>`).join('')}</div>`;
+    frame({mode: 'play-sort', left: gameHead('내 기준으로 나누기', '[4국04-02]', left.length ? (picked ? `‘${esc(picked)}’는 어느 바구니?` : '낱말을 누르고 바구니를 눌러요!') : '다 나누었어요!<br>왜 그렇게 나눴는지<br><b>친구에게 말해 봐요</b>.', 'bbo-basket.png') + `<div class="sort-cards">${left.map(w => `<button class="word-chip${picked === w ? ' on' : ''}" data-card="${esc(w)}">${esc(w)}</button>`).join('')}</div>`,
+      right: baskets + (left.length ? `<p class="tip-text">${img('ic-leaf.png', 'leaf')}정답은 없어요. 내가 정한 기준에 맞게 나누면 돼요. 헷갈리는 낱말은 사전에서 뜻을 찾아봐요.</p>` : gameDone('sort-my', words))});
+    wireAgain();
+    app.querySelectorAll<HTMLButtonElement>('[data-card]').forEach(b => b.onclick = () => { chime(); picked = b.dataset.card!; draw(); });
+    app.querySelectorAll<HTMLButtonElement>('[data-basket]').forEach(b => b.onclick = () => { if (!picked) return toast('먼저 낱말을 골라요.'); placed.set(picked, +b.dataset.basket!); picked = null; chime('ok'); draw(); });
+  };
+  draw();
+}
+
+// 1차시·11~12차시: 세 가지 단서 낱말 맞히기(단서를 적게 보고 맞힐수록 열매 별이 많아요)
+async function clueGame(n = 5) {
+  const pool = shuffle(huntPool().filter(r => r.p !== '의존 명사')).slice(0, 60);
+  const qs: ReturnType<typeof clueOf>[] = [];
+  for (const r of pool) {
+    if (qs.length === n) break;
+    const e = await dict.entry(r.k).catch(() => null); if (!e) continue;
+    const w = bare(e.w), def = e.s[0]?.d ?? '';
+    if (!def || def.length > 70) continue;
+    const others = shuffle(huntPool().filter(x => x.p === r.p && bare(x.w) !== w && x.w.length === r.w.length)).slice(0, 3).map(x => bare(x.w));
+    if (others.length < 3) continue;
+    qs.push(clueOf(w, kindOf(e.p).kid, def, CHO[split(w[0])!.cho], others));
+  }
+  if (!qs.length) return playHub();
+  let i = 0, shown = 1, score = 0; const words: string[] = [];
+  const draw = (solved = false) => {
+    const q = qs[i], done = i >= qs.length;
+    if (done) { frame({mode: 'play-clue', left: gameHead('세 가지 단서', '[4국04-02]', `열매 별 <b>${score}</b>개를 모았어요!`, 'bbo-cheer.png'), right: gameDone('clue', words)}); wireAgain(); return; }
+    frame({mode: 'play-clue', left: gameHead(`세 가지 단서 ${i + 1}/${qs.length}`, '[4국04-02]', '단서를 보고<br>어떤 낱말인지 맞혀 봐요!', 'bbo-think.png') +
+      `<ol class="clue-list">${q.clues.map((c, j) => `<li class="${j < shown ? 'open' : 'closed'}">${j < shown ? `<b>단서 ${j + 1}</b> ${esc(c)}` : `<b>단서 ${j + 1}</b> ?`}</li>`).join('')}</ol>
+      ${!solved && shown < 3 ? `<button class="big-button cream" data-more>단서 하나 더 보기</button>` : ''}
+      <p class="tip-text">${img('ic-leaf.png', 'leaf')}<span>단서 1개로 맞히면 별 3개, 2개면 2개, 3개면 1개예요. 모은 별 <b>${score}</b>개</span></p>`,
+    right: `<h3 class="ask">이 낱말은 무엇일까요?</h3><div class="choice-grid wide">${q.options.map(o => `<button class="choice${solved && o === q.word ? ' right' : ''}" data-ans="${esc(o)}" ${solved ? 'disabled' : ''}>${esc(o)}</button>`).join('')}</div>
+      ${solved ? `<div class="next-row">${wordLink(q.word)}<button class="big-button leaf" data-next>${i + 1 < qs.length ? '다음 문제 ▸' : '다 했어요!'}</button></div>` : ''}`});
+    app.querySelector<HTMLButtonElement>('[data-more]')?.addEventListener('click', () => { shown++; chime(); draw(); });
+    app.querySelectorAll<HTMLButtonElement>('[data-ans]').forEach(b => b.onclick = () => {
+      if (b.dataset.ans === q.word) { score += 4 - shown; words.push(q.word); shown = 3; chime('ok'); return draw(true); }
+      chime('no'); shake(b);
+      if (shown < 3) { shown++; toast('아쉬워요! 단서를 하나 더 보여 줄게요.'); draw(); } else toast('다른 낱말을 골라 봐요.');
+    });
+    app.querySelector<HTMLButtonElement>('[data-next]')?.addEventListener('click', () => { i++; shown = 1; draw(); });
+  };
+  draw();
+}
+
+// 11~12차시: 아이가 단서 문제를 내고 친구에게 보여 주기(서버에 저장하지 않음)
+function clueMake() {
+  frame({mode: 'play-clue', left: gameHead('단서 문제 내기', '[4국04-02]', '사전에서 낱말을 찾아<br>단서 <b>세 가지</b>를 만들어 봐요!', 'bbo-write.png') +
+    `<p class="tip-text">${img('ic-leaf.png', 'leaf')}단서는 ① 뜻 ② 낱말의 종류 ③ 첫 자음이나 글자 수처럼, 점점 쉬워지게 써요.</p>`,
+  right: `<label class="field">정답 낱말<input id="c-word" maxlength="12" placeholder="예: 우산"></label>
+    <label class="field">단서 1(가장 어렵게)<input id="c1" maxlength="60" placeholder="예: 비가 올 때 펴서 써요."></label>
+    <label class="field">단서 2<input id="c2" maxlength="60" placeholder="예: 이름을 나타내는 말이에요."></label>
+    <label class="field">단서 3(가장 쉽게)<input id="c3" maxlength="60" placeholder="예: ‘ㅇ’으로 시작하는 두 글자예요."></label>
+    <div class="next-row"><button class="big-button cream" data-check>사전에서 확인</button><button class="big-button leaf" data-show>친구에게 문제 내기 ▸</button></div><div class="clue-check"></div>`});
+  const v = (id: string) => app.querySelector<HTMLInputElement>('#' + id)!.value.trim();
+  app.querySelector<HTMLButtonElement>('[data-check]')!.onclick = async () => {
+    const w = v('c-word'), box = app.querySelector<HTMLDivElement>('.clue-check')!;
+    const r = dict.same(w)[0] ?? dict.same(dict.baseForms(w)[0] ?? '')[0];
+    if (!r) { box.innerHTML = `<p class="tip-text">‘${esc(w)}’는 사전에서 찾지 못했어요. 기본형으로 써 볼까요?</p>`; return; }
+    const e = await dict.entry(r.k);
+    box.innerHTML = `<p class="tip-text">${img('ic-book.png', 'leaf')}사전 뜻: ${esc(e.s[0].d)} <span class="kind kind-${kindOf(e.p).color}">${esc(kindOf(e.p).kid)}</span></p>`;
+  };
+  app.querySelector<HTMLButtonElement>('[data-show]')!.onclick = () => {
+    const w = v('c-word'), clues = [v('c1'), v('c2'), v('c3')];
+    if (!w || clues.some(c => !c)) return toast('정답과 단서 세 개를 모두 적어 주세요.');
+    let shown = 1, open = false;
+    const show = () => {
+      frame({mode: 'play-clue', left: gameHead('친구에게 문제 내기', '[4국04-02]', '단서를 하나씩 열어 주세요!', 'bbo-cheer.png') + `<ol class="clue-list big">${clues.map((c, j) => `<li class="${j < shown ? 'open' : 'closed'}"><b>단서 ${j + 1}</b> ${j < shown ? esc(c) : '?'}</li>`).join('')}</ol>`,
+        right: `<div class="unit-go">${shown < 3 ? '<button class="big-button cream" data-more>다음 단서 열기</button>' : ''}<button class="big-button leaf" data-open>${open ? `정답: ${esc(w)}` : '정답 보기'}</button>${open ? wordLink(w) : ''}<a class="big-button honey" href="#play/clue-make">새 문제 만들기</a></div>`});
+      app.querySelector<HTMLButtonElement>('[data-more]')?.addEventListener('click', () => { shown++; chime(); show(); });
+      app.querySelector<HTMLButtonElement>('[data-open]')!.onclick = () => { open = true; chime('ok'); show(); };
+    };
+    show();
+  };
+}
+
+// 13차시: 마무리 도전 — 사전에서 얻는 정보, 동형이의어·다의어, 소리 나는 대로 읽기, 기본형, 사전 차례
+function wrapGame() {
+  let i = 0, right = 0, tried = false;
+  const draw = (solved = false) => {
+    if (i >= WRAP_QUIZ.length) { frame({mode: 'play-wrap', left: gameHead('5단원 마무리 도전', '[4국04-02]', `${WRAP_QUIZ.length}문제 중 <b>${right}</b>문제를<br>한 번에 맞혔어요!`, 'bbo-cheer.png'), right: gameDone('wrap', WRAP_QUIZ.map(q => q.word ?? '').filter(Boolean))}); wireAgain(); return; }
+    const q = WRAP_QUIZ[i];
+    frame({mode: 'play-wrap', left: gameHead(`5단원 마무리 도전 ${i + 1}/${WRAP_QUIZ.length}`, '[4국04-02]', '배운 것을<br>정리해 봐요!', 'bbo-think.png') + (solved ? `<p class="tip-text big">${img('ic-leaf.png', 'leaf')}${esc(q.why)}</p>` : ''),
+      right: `<h3 class="ask">${q.q}</h3><div class="choice-grid wide">${q.options.map((o, j) => `<button class="choice${solved && j === q.a ? ' right' : ''}" data-ans="${j}" ${solved ? 'disabled' : ''}>${esc(o)}</button>`).join('')}</div>
+        ${solved ? `<div class="next-row">${q.word ? wordLink(q.word) : ''}<button class="big-button leaf" data-next>${i + 1 < WRAP_QUIZ.length ? '다음 문제 ▸' : '다 했어요!'}</button></div>` : ''}`});
+    app.querySelectorAll<HTMLButtonElement>('[data-ans]').forEach(b => b.onclick = () => {
+      if (+b.dataset.ans! === q.a) { if (!tried) right++; chime('ok'); return draw(true); }
+      tried = true; chime('no'); shake(b); toast('다시 생각해 봐요!');
+    });
+    app.querySelector<HTMLButtonElement>('[data-next]')?.addEventListener('click', () => { i++; tried = false; draw(); });
+  };
+  draw();
+}
+
 // ── 길 찾기 ──
 async function route() {
   const h = decodeURIComponent(location.hash.slice(1));
@@ -707,6 +879,12 @@ async function route() {
   if (h === 'teacher') return teacher();
   if (h === 'read') return readPage();
   if (h.startsWith('read=')) return readPage(h.slice(5));
+  if (h === 'unit5') return unit5Page();
+  if (h.startsWith('unit5/')) return unit5Page(h.slice(6));
+  if (h === 'chart') return chartPage();
+  if (h === 'stories') return storiesPage();
+  if (h === 'mydict') return myDictPage();
+  if (h === 'try-base') { await home(); app.querySelector<HTMLButtonElement>('[data-try]')?.click(); return; }
   if (h === 'play') return playHub();
   if (h.startsWith('play/')) return playGame(h.slice(5));
   return home();

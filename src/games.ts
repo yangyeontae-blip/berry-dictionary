@@ -27,12 +27,12 @@ export const SORT_WORDS = {
   look: '예쁘다 크다 작다 길다 짧다 높다 낮다 무겁다 가볍다 빨갛다 파랗다 노랗다 차갑다 뜨겁다 달다 짜다 맵다 시끄럽다 조용하다 깨끗하다 더럽다 둥글다 부드럽다 딱딱하다 밝다 어둡다 넓다 좁다 귀엽다 따뜻하다'.split(' '),
 } as const;
 /** 바구니마다 2개씩(모두 n개) 고른다. 같은 첫 글자는 피한다. */
-export function pickSortRound(rows: Row[], n = 6, rand: Rand = Math.random) {
+export function pickSortRound(rows: Row[], n = 6, rand: Rand = Math.random, words: {name: readonly string[]; move: readonly string[]; look: readonly string[]} = SORT_WORDS) {
   const out: Row[] = [], used = new Set<string>();
   const byWord = new Map<string, Row>();
   for (const r of rows) { const w = bare(r.w); if (!byWord.has(w) && basketOf(r)) byWord.set(w, r); }
   for (let b = 0, tries = 0; out.length < n && tries < 2000; tries++) {
-    const basket = BASKETS[b % 3], w = pick([...SORT_WORDS[basket.key]], rand), r = byWord.get(w);
+    const basket = BASKETS[b % 3], w = pick([...words[basket.key]], rand), r = byWord.get(w);
     if (!r || basketOf(r) !== basket.key || used.has(w) || used.has(w[0])) continue;
     used.add(w); used.add(w[0]); out.push(r); b++;
   }

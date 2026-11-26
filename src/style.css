@@ -427,3 +427,48 @@ img{user-select:none}
 @media (max-width:560px){.cho-line{display:grid;grid-template-columns:repeat(7,1fr)}.cho-line span{width:auto}.chip-strip{padding-inline:12px}}
 .kind{font-size:13.5px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── 교과서 길(5단원 13차시) ── */
+.menu{flex-wrap:wrap}
+.unit-path{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px;position:relative}
+.unit-path::before{content:'';position:absolute;left:27px;top:20px;bottom:20px;border-left:4px dotted #c9a46a}
+.unit-stop{position:relative;display:flex;align-items:center;gap:12px;padding:8px 12px 8px 6px;border-radius:18px;text-decoration:none;border:3px solid transparent;transition:background .15s}
+.unit-stop:hover{background:#fff4d6}
+.unit-stop.on{background:var(--leaf-soft);border-color:var(--leaf)}
+.unit-no{flex:none;display:grid;place-items:center;min-width:46px;height:46px;padding:0 6px;border-radius:999px;background:var(--honey);border:3px solid #fff;box-shadow:0 3px 0 var(--honey-dark);font:700 17px var(--brand);color:var(--ink)}
+.unit-stop.on .unit-no{background:var(--leaf);color:#fff;box-shadow:0 3px 0 var(--leaf-dark)}
+.unit-title{display:flex;flex-direction:column;font:700 19px/1.3 var(--brand)}
+.unit-title small{font:500 14px/1.4 var(--body);color:var(--ink-soft)}
+.unit-card{display:grid;gap:12px;justify-items:start}
+.unit-book{margin:0;display:flex;align-items:center;gap:6px;font-size:16px;color:var(--ink-soft)}
+.unit-goal{font-size:18px}
+.unit-go{display:grid;gap:12px;width:100%}
+.unit-go .big-button{justify-content:flex-start;width:100%}
+.code{font-style:normal;font-size:13px;padding:2px 8px;border-radius:999px;background:var(--sky-soft);color:var(--sky);white-space:nowrap}
+.chart-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chart-row span{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:#fff;border:2px solid #ecd3a3;font:700 22px var(--brand)}
+.clue-list{list-style:none;padding:0;margin:8px 0;display:grid;gap:8px}
+.clue-list li{padding:12px 16px;border-radius:16px;background:#fff;border:3px solid #ecd3a3;font-size:18px;line-height:1.5}
+.clue-list li.closed{background:#f3ead8;color:var(--stone)}
+.clue-list li b{display:inline-block;margin-right:6px;padding:1px 10px;border-radius:999px;background:var(--honey);font:700 14px var(--brand);color:var(--ink)}
+.clue-list.big li{font-size:24px}
+.baskets.two{grid-template-columns:1fr 1fr}
+.field{display:grid;gap:4px;margin:0 0 10px;font:700 16px var(--brand)}
+.field input,.field textarea{padding:10px 12px;border-radius:12px;border:2px solid #ecd3a3;background:#fff;font:500 18px var(--body)}
+.mydict-sheet{display:grid;gap:10px}
+.mydict-title{margin:0;font:700 24px var(--brand);text-align:center;border-bottom:3px double #c9a46a;padding-bottom:6px}
+.mydict-entry{padding:8px 4px;border-bottom:1px dashed #d9c39a}
+.mydict-entry h4{margin:0 0 4px;font:700 21px var(--brand);display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.mydict-entry .pron{font:500 15px var(--body);color:var(--ink-soft)}
+.mydict-entry p{margin:2px 0;font-size:16px;line-height:1.55}
+.mydict-entry .mine,.mydict-entry .ex{color:var(--leaf-dark)}
+@media print{
+  @page{size:A4;margin:14mm}
+  body{background:#fff}
+  .scene>*:not(.book),.book>*:not(.page-right),.tabs{display:none!important}
+  .scene,.book{display:block;padding:0;background:none;box-shadow:none}
+  .page-right{max-height:none;overflow:visible;box-shadow:none;background:#fff;padding:0}
+  .mydict-sheet{display:block;columns:2;column-gap:10mm}
+  .mydict-title{column-span:all;margin-bottom:6mm}
+  .mydict-entry{break-inside:avoid}
+}
