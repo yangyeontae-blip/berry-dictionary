@@ -47,7 +47,7 @@ export default {
     }
     const q = (url.searchParams.get('q') ?? '').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, '').trim().slice(0, 20);
     if (!q) return json({items: []});
-    const cache = (caches as unknown as {default: Cache}).default, key = new Request('https://cache.berry-dictionary/stdict?q=' + encodeURIComponent(q));
+    const cache = (caches as unknown as {default: Cache}).default, key = new Request('https://cache.berry-dictionary/stdict2?q=' + encodeURIComponent(q));
     const hit = await cache.match(key); if (hit) return hit;
     try {
       const all = env.STDICT_KEY?.trim() ? await direct(env.STDICT_KEY, q) : await viaDict(env.DICT!, q);

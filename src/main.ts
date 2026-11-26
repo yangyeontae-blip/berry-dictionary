@@ -610,8 +610,8 @@ async function stdDetail(id: string, btn: HTMLButtonElement) {
   box.hidden = false; btn.textContent = '접기 ▴'; box.innerHTML = '<p class="tip-text">펼치는 중…</p>';
   try {
     const w = await fetch(`${API}/api/stdict?id=${encodeURIComponent(id)}`).then(r => r.ok ? r.json() : Promise.reject()) as StdWord;
-    const pr = (w.pronunciation ?? []).filter(Boolean);
-    box.innerHTML = `<p class="std-line">${pr.length ? `<span class="info-chip">발음 [${esc(pr.join('/'))}]</span>${pr[0] !== bare(w.word) ? '<em>쓰는 것과 읽는 소리가 달라요!</em>' : ''}` : ''}${w.wordType ? `<span class="info-chip">${esc(w.wordType)}</span>` : ''}</p>
+    const pr = (w.pronunciation ?? []).filter(Boolean).map(x => x.replace(/ː/g, ':'));
+    box.innerHTML = `<p class="std-line">${pr.length ? `<span class="info-chip">발음 [${esc(pr.join('/'))}]</span>${pr[0].replace(/:/g, '') !== bare(w.word) ? '<em>쓰는 것과 읽는 소리가 달라요!</em>' : ''}` : ''}${w.wordType ? `<span class="info-chip">${esc(w.wordType)}</span>` : ''}</p>
       ${w.senses.slice(0, 4).map((s, j) => `<div class="std-sense"><b>${j + 1}</b> ${esc(s.definition)}${s.examples.slice(0, 2).map(x => `<p class="ex"><span class="ex-tag">예문</span><span>${esc(x)}</span></p>`).join('')}${s.related?.length ? `<div class="rel"><span class="rel-label">함께 보기</span>${s.related.map(r => `<button class="rel-word" data-go="${esc(r.word)}">${esc(r.word)}</button>`).join('')}</div>` : ''}</div>`).join('')}`;
     box.querySelectorAll<HTMLButtonElement>('.rel-word').forEach(b => b.onclick = () => { const s = dict.same(b.dataset.go!); if (s.length) { chime(); location.hash = 'w/' + s[0].k; } else toast('‘' + b.dataset.go + '’는 베리 사전에 없어요. 찾기 칸에 넣어 큰 사전에서 찾아봐요.'); });
   } catch { box.innerHTML = '<p class="tip-text">자세한 내용을 불러오지 못했어요.</p>'; }
