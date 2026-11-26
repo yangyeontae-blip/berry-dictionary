@@ -126,6 +126,7 @@ async function home() {
     ${searchBox()}
     ${e ? `<a class="today" href="#w/${today.k}"><span class="ribbon">${img('ic-flower.png', 'ribbon-flower')}오늘의 낱말${img('ic-flower.png', 'ribbon-flower')}</span><strong>${esc(bare(e.w))}</strong><span class="kind kind-${kindOf(e.p).color}">${esc(kindOf(e.p).kid)}</span><p>${esc(e.s[0].d)}</p>${img('bbo-read.png', 'today-bbo')}</a>` : ''}
     <a class="big-button leaf" href="#hunt">${img('ic-hunt.png', 'btn-icon')}사전 찾기 놀이 <span aria-hidden="true">▸</span></a>
+    <a class="big-button cream wide" href="#book">${img('ic-book.png', 'btn-icon')}종이 사전처럼 넘겨 보기 <span aria-hidden="true">▸</span></a>
     <a class="big-button honey wide" href="#read">${img('ic-read.png', 'btn-icon')}글 읽다 모르는 낱말 찾기 <span aria-hidden="true">▸</span></a>`,
   right: `
     <div class="guide-words right"><span></span><span>하늘${img('ic-leaf.png', 'leaf flip')}</span></div>
@@ -400,7 +401,8 @@ function teacher() {
     <label class="field">글<textarea id="text-body" rows="6" maxlength="1200" placeholder="여기에 글을 붙여 넣어 주세요."></textarea></label>
     <button class="big-button cream" id="sample-text">예시 글 넣어 보기</button><button class="big-button leaf" id="make-text">글 주소 만들기</button><div class="share share-text" hidden></div></section>
     <p class="tip-text">낱말과 글은 서버에 저장하지 않고 주소 안에만 담겨요. 아이 기록은 각 기기에만 남아요.</p>`,
-  right: `<a class="big-button leaf" href="#unit5">${img('ic-book.png', 'btn-icon')}교과서 길: 국어 3-2 나 5단원 13차시별 활동 ▸</a>
+  right: `<a class="big-button berry" href="#team">${img('ic-hunt.png', 'btn-icon')}모둠 사전 게임(전자칠판) ▸</a>
+    <a class="big-button leaf" href="#unit5">${img('ic-book.png', 'btn-icon')}교과서 길: 국어 3-2 나 5단원 13차시별 활동 ▸</a>
     <section class="t-card lesson"><h3>40분 수업 흐름 예시</h3><ol>${LESSON.map(([t, what, to, code]) => `<li><b>${t}</b><span>${what} <em class="code">${code}</em></span><a href="${to}">열기 ▸</a></li>`).join('')}</ol></section>
     <div class="check-list"><p class="tip-text">${img('bbo-read.png', 'hint-bbo')}낱말을 적으면 사전에 있는지 바로 살펴 드려요.</p></div>
     ${offlineBox()}`});
@@ -430,6 +432,7 @@ const GAMES = [
   {to: 'play/sort', title: '낱말 바구니', sub: '이름·움직임·모양을 나타내는 말로 나눠 담아요', code: '[4국04-02]', art: 'ic-basket.png', color: 'berry'},
   {to: 'play/order', title: '사전 차례 줄 세우기', sub: '국어사전에 실린 차례대로 낱말 카드를 세워요', code: '[4국04-02]', art: 'ic-order.png', color: 'honey'},
   {to: 'play/pair-a', title: '반대말 짝 찾기', sub: '뜻이 반대인 낱말끼리 짝을 지어요', code: '[4국04-01]', art: 'ic-pair.png', color: 'leaf', also: ['play/pair-s', '비슷한말 짝 찾기']},
+  {to: 'play/open', title: '한 번에 펼치기', sub: '종이 사전을 딱 한 번에 펼쳐 낱말 가까이 가요', code: '[4국04-02]', art: 'ic-book.png', color: 'sky'},
   {to: 'play/honor', title: '높임말 바꾸기', sub: '웃어른께 쓰는 말로 바꿔 말해요', code: '[4국04-04]', art: 'ic-honor.png', color: 'plum'},
 ];
 function playHub() {
@@ -439,7 +442,7 @@ function playHub() {
     ${titleTrack()}`,
   right: `<div class="game-cards">${GAMES.map(g => `<div class="game-card gc-${g.color}"><a href="#${g.to}" class="game-main">${img(g.art, 'game-art')}<span><b>${g.title}</b><small>${g.sub}</small></span><em class="code">${g.code}</em></a>${g.also ? `<a href="#${g.also[0]}" class="game-also">${g.also[1]} ▸</a>` : ''}</div>`).join('')}</div>`});
 }
-const PRAISE: Record<string, string> = {'sort-tb': '교과서 낱말 정리왕!', 'sort-my': '나만의 기준 발견!', clue: '단서 탐정!', wrap: '5단원 마무리 완료!', sort: '바구니 정리왕!', order: '줄 세우기 박사!', 'pair-a': '반대말 탐정!', 'pair-s': '비슷한말 탐정!', honor: '예절 왕!'};
+const PRAISE: Record<string, string> = {open: '사전 펼치기 달인!', 'sort-tb': '교과서 낱말 정리왕!', 'sort-my': '나만의 기준 발견!', clue: '단서 탐정!', wrap: '5단원 마무리 완료!', sort: '바구니 정리왕!', order: '줄 세우기 박사!', 'pair-a': '반대말 탐정!', 'pair-s': '비슷한말 탐정!', honor: '예절 왕!'};
 const TITLES: [number, string][] = [[5, '새싹 탐험가'], [10, '산딸기 탐험가'], [20, '숲속 사전 박사'], [30, '베리숲 사전왕']];
 /** 도장이 5·10·20·30개가 되는 순간 칭호를 준다. */
 function titleGet() { const t = TITLES.find(([n]) => n === state.stamps); return t ? `<p class="title-get">${img('bbo-cheer.png', 'title-bbo')}<span>새 칭호를 얻었어요!<br><b>${t[1]}</b></span></p>` : ''; }
@@ -465,6 +468,7 @@ async function playGame(kind: string) {
   if (kind === 'clue') return clueGame();
   if (kind === 'clue-make') return clueMake();
   if (kind === 'wrap') return wrapGame();
+  if (kind === 'open') return startOpen();
   if (kind === 'order') return orderGame(1);
   if (kind === 'pair-a' || kind === 'pair-s') {
     pairsCache ??= await fetch(import.meta.env.BASE_URL + 'data/pairs.json').then(r => r.json()).catch(() => null);
@@ -741,7 +745,179 @@ function wireSentence(e: Entry, k: number) {
 }
 
 const clock = (ms: number) => { const s = Math.floor(ms / 1000); return s >= 60 ? `${Math.floor(s / 60)}분 ${s % 60}초` : `${s}초`; };
-setInterval(() => { const t = document.querySelector('.timer'); if (t && hunt) t.textContent = clock(Date.now() - hunt.t0); }, 1000);
+setInterval(() => { const t = document.querySelector<HTMLElement>('.timer'); if (!t) return; const t0 = t.dataset.t0 ? +t.dataset.t0 : hunt?.t0; if (t0) t.textContent = clock(Date.now() - t0); }, 1000);
+
+// ── 종이 사전 모드: 쪽을 넘기고, 자음 색인을 잡고, 옆면을 훑어 펼치는 사전(7~8차시) ──
+// 쉬움·보통 등급 낱말만 한 쪽에 8개씩 담아 실제 초등 사전처럼 1,300여 쪽이 된다. 가로 화면은 두 쪽, 세로 화면은 한 쪽.
+const PER_PAGE = 8;
+let bookRowsCache: Row[] | null = null;
+const bookRows = () => bookRowsCache ??= dict.rows.filter(r => r.lv && !r.x && !/^-|-$/.test(r.w) && !['접사', '어미', '조사'].includes(r.p));
+const bookPages = () => Math.ceil(bookRows().length / PER_PAGE);
+const narrow = () => matchMedia('(max-width: 980px)').matches;
+/** 사전 위치 k가 실린 쪽(0부터). k가 책에 없으면 그 앞 낱말이 실린 쪽. */
+function pageOfK(k: number) { const rows = bookRows(); let lo = 0, hi = rows.length; while (lo < hi) { const m = (lo + hi) >> 1; if (rows[m].k < k) lo = m + 1; else hi = m; } return Math.min(bookPages() - 1, Math.floor(Math.max(0, lo - (rows[lo]?.k === k ? 0 : 1)) / PER_PAGE)); }
+/** 자음 색인: 그 자음으로 시작하는 첫 낱말이 실린 쪽. */
+function pageOfCho(cho: string) { const i = CHO.indexOf(cho as never), k = dict.firstIndexOf(join({cho: Math.max(0, i), jung: 0, jong: 0})), rows = bookRows(); const at = rows.findIndex(r => r.k >= k); return Math.floor((at < 0 ? rows.length - 1 : at) / PER_PAGE); }
+const pageRows = (pg: number) => bookRows().slice(pg * PER_PAGE, pg * PER_PAGE + PER_PAGE);
+async function pageHtml(pg: number, side: string, target?: number) {
+  const rows = pageRows(pg);
+  if (!rows.length) return `<div class="paper-page ${side} blank"></div>`;
+  const es = await Promise.all(rows.map(r => dict.entry(r.k).catch(() => null)));
+  const short = (d: string) => d.length > 40 ? d.slice(0, 40) + '…' : d;
+  return `<div class="paper-page ${side}"><div class="paper-head"><b>${esc(bare(rows[0].w))}</b><span>${esc(bare(rows.at(-1)!.w))}</span></div>
+    <ol class="paper-words">${rows.map((r, i) => `<li><button class="paper-word${target === r.k ? ' target' : ''}" data-k="${r.k}"><b>${esc(bare(r.w))}${dict.same(r.w).length > 1 ? `<sup>${r.n}</sup>` : ''}</b><span class="kind kind-${kindOf(r.p).color}">${esc(kindOf(r.p).kid.replace(/[을를] 나타내는 말$/, ''))}</span><span class="paper-def">${esc(short(es[i]?.s[0]?.d ?? ''))}</span></button></li>`).join('')}</ol>
+    <div class="paper-no">${pg + 1}</div></div>`;
+}
+type OpenGame = {targets: Row[]; i: number; opened: boolean; scores: number[]; found: boolean};
+let openGame: OpenGame | null = null;
+/** 펼친 쪽 번호(가로 화면에서는 왼쪽 쪽, 짝수). */
+let bookAt = 0;
+async function bookView(pg = bookAt) {
+  const one = narrow(), last = bookPages() - 1;
+  pg = Math.max(0, Math.min(last, pg)); if (!one) pg -= pg % 2; bookAt = pg;
+  const g = openGame, target = g ? g.targets[g.i] : null;
+  const [left, right] = await Promise.all([pageHtml(pg, 'pl', target?.k), one ? Promise.resolve('') : pageHtml(pg + 1, 'pr', target?.k)]);
+  const tPage = target ? pageOfK(target.k) : -1;
+  const thick = Math.round(pg / last * 100);
+  const head = g ? `<div class="open-head"><span class="ribbon small">한 번에 펼치기 ${g.i + 1}/${g.targets.length}</span><p class="bubble">찾을 낱말: <b class="open-target">${esc(bare(target!.w))}</b>${g.opened ? (tPage >= pg && tPage <= pg + (one ? 0 : 1) ? ' — 이 쪽에 있어요! 낱말을 눌러요.' : ` — 목표는 <b>${tPage > pg ? '뒤로' : '앞으로'} ${Math.abs(tPage - pg) - (tPage > pg && !one ? 1 : 0)}쪽</b>`) : ' — 색인이나 옆면을 <b>딱 한 번</b> 잡아 펼쳐요!'}</p>
+      ${g.opened ? `<p class="open-score">이번 점수 <b>${g.scores[g.i]}</b>점</p><div class="next-row"><button class="big-button leaf" data-open-next>${g.i + 1 < g.targets.length ? '다음 낱말 ▸' : '결과 보기'}</button></div>` : ''}</div>` : '';
+  frame({mode: g ? 'play-open' : 'book', left: '', right: ''});
+  const book = app.querySelector<HTMLElement>('.book')!;
+  book.classList.add('paper-book'); if (one) book.classList.add('one');
+  book.querySelector('.page-left')!.innerHTML = head + (one ? edge(pg, last, thick) : '') + left;
+  book.querySelector('.page-right')!.innerHTML = one ? '' : edge(pg, last, thick) + right;
+  book.style.setProperty('--thick-l', String(thick)); book.style.setProperty('--thick-r', String(100 - thick));
+  const go = (to: number, dir = to > bookAt ? 'next' : 'prev') => { chime(); book.classList.add('turn-' + dir); setTimeout(() => { if (openGame && !openGame.opened) settle(to); else bookView(to); }, 180); };
+  const settle = (to: number) => { const gg = openGame!; const d = Math.abs(pageOfK(gg.targets[gg.i].k) - to); gg.scores[gg.i] = Math.max(0, Math.round(100 * (1 - d / 60))); gg.opened = true; bookView(to); };
+  const step = one ? 1 : 2;
+  book.querySelectorAll<HTMLButtonElement>('[data-cho]').forEach(b => b.onclick = () => go(pageOfCho(b.dataset.cho!)));
+  app.querySelectorAll<HTMLButtonElement>('.chip-strip [data-cho]').forEach(b => b.onclick = () => go(pageOfCho(b.dataset.cho!)));
+  book.querySelectorAll<HTMLButtonElement>('[data-flip]').forEach(b => b.onclick = () => go(bookAt + step * +b.dataset.flip!));
+  const range = book.querySelector<HTMLInputElement>('.edge-range'), peek = book.querySelector<HTMLElement>('.edge-peek');
+  if (range && peek) {
+    range.oninput = () => { const r = pageRows(+range.value)[0]; peek.hidden = false; peek.textContent = `${+range.value + 1}쪽 · ${r ? bare(r.w) : ''}`; };
+    range.onchange = () => { peek.hidden = true; go(+range.value); };
+  }
+  // 종이 가장자리를 잡고 옆으로 끌어 한 장 넘기기(터치·마우스)
+  let x0: number | null = null;
+  book.onpointerdown = e => { if ((e.target as HTMLElement).closest('button,input,a')) return; x0 = e.clientX; };
+  book.onpointerup = e => { if (x0 === null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 50 && !(openGame && !openGame.opened)) go(bookAt + (dx < 0 ? step : -step)); };
+  book.querySelectorAll<HTMLButtonElement>('.paper-word').forEach(b => b.onclick = () => {
+    const k = +b.dataset.k!;
+    if (!openGame) { location.hash = 'w/' + k; return; }
+    if (!openGame.opened) return toast('먼저 색인이나 옆면을 한 번 잡아 펼쳐요!');
+    if (k === openGame.targets[openGame.i].k) { if (!openGame.found) { openGame.found = true; stampFound(state, openGame.targets[openGame.i].w); save(); } chime('ok'); confetti(); b.classList.add('right'); toast('찾았어요! 도장 하나!', 'ok'); }
+    else { chime('no'); shake(b); toast(`이건 ‘${bare(dict.rows[k].w)}’예요. 쪽 위의 길잡이 낱말을 보고 넘겨 봐요.`); }
+  });
+  app.querySelector<HTMLButtonElement>('[data-open-next]')?.addEventListener('click', () => { const gg = openGame!; if (gg.i + 1 < gg.targets.length) { gg.i++; gg.opened = false; gg.found = false; bookView(Math.floor(bookPages() / 2)); } else openDone(); });
+  if (!g) history.replaceState(null, '', '#book/' + (bookAt + 1));
+}
+function edge(pg: number, last: number, thick: number) {
+  return `<div class="paper-nav"><button class="flip-btn" data-flip="-1" ${pg === 0 ? 'disabled' : ''} aria-label="앞 장">◀</button>
+    <label class="edge"><span class="sr">책 옆면을 훑어 펼치기</span><input class="edge-range" type="range" min="0" max="${last}" value="${pg}" style="--at:${thick}%"><span class="edge-peek" hidden></span></label>
+    <button class="flip-btn" data-flip="1" ${pg >= last - 1 ? 'disabled' : ''} aria-label="다음 장">▶</button></div>
+    <p class="edge-tip">${img('ic-leaf.png', 'leaf')}<span>책 옆면(띠)을 끌어 훑거나, 종이를 옆으로 밀어 넘기거나, 자음 색인을 눌러 펼쳐요.</span></p>`;
+}
+function startOpen() {
+  const pool = shuffle(bookRows().filter(r => r.lv === 1 && ['명사', '동사', '형용사'].includes(r.p) && bare(r.w).length >= 2));
+  const out: Row[] = [], used = new Set<string>();
+  for (const r of pool) { const c = bare(r.w)[0]; if (used.has(c)) continue; used.add(c); out.push(r); if (out.length === 5) break; }
+  openGame = {targets: out, i: 0, opened: false, scores: [], found: false};
+  bookView(Math.floor(bookPages() / 2));
+}
+function openDone() {
+  const g = openGame!, avg = Math.round(g.scores.reduce((a, b) => a + b, 0) / g.scores.length);
+  openGame = null;
+  frame({mode: 'play-open', left: gameHead('한 번에 펼치기', '[4국04-02]', `평균 <b>${avg}</b>점!<br>${avg >= 80 ? '사전 펼치기 달인이에요!' : avg >= 50 ? '감각이 점점 좋아져요!' : '첫 자음과 길잡이 낱말을 떠올려 봐요!'}`, 'bbo-cheer.png') +
+    `<ol class="order-line">${g.targets.map((t, i) => `<li class="filled"><span>${i + 1}</span><b>${esc(bare(t.w))}</b> ${g.scores[i]}점</li>`).join('')}</ol>`,
+  right: gameDone('open', g.targets.map(t => t.w))});
+  wireAgain();
+}
+
+// ── 모둠 사전 게임(선생님 화면·전자칠판): "○○을 찾으세요!" → 먼저 찾은 모둠이 점수 ──
+// 점수는 선생님 기기에만 남는다(새로고침해도 이어짐). 아이 이름은 받지 않고 모둠 이름만 쓴다.
+type Team = {teams: {name: string; score: number}[]; source: 'mine' | 'unit5' | 'easy'; mine: string[]; changed: boolean; used: string[]; word?: string; ask?: string; sentence?: string; t0?: number; winner?: number; hint: number; log: number[]};
+const TEAM_KEY = 'berry-team-v1';
+const loadTeam = (): Team | null => { try { return JSON.parse(localStorage.getItem(TEAM_KEY) ?? 'null'); } catch { return null; } };
+const saveTeam = (t: Team | null) => { try { if (t) localStorage.setItem(TEAM_KEY, JSON.stringify(t)); else localStorage.removeItem(TEAM_KEY); } catch { /* 저장 못 해도 진행 */ } };
+let team: Team | null = null;
+function teamSetup() {
+  const prev = loadTeam();
+  frame({mode: 'team', left: gameHead('모둠 사전 게임', '[4국04-02]', '선생님이 낱말을 띄우면<br>모둠이 사전에서 찾아요.<br><b>먼저 찾은 모둠</b>이 1점!', 'bbo-run.png') +
+    `<p class="tip-text">${img('ic-leaf.png', 'leaf')}<span>전자칠판에 띄워 두고 선생님이 진행해요. 모둠은 종이 사전이나 이 앱으로 찾아요.</span></p>
+    ${prev ? `<button class="big-button honey" data-resume>이어 하기 (${prev.teams.map(t => `${esc(t.name)} ${t.score}`).join(' · ')})</button>` : ''}`,
+  right: `<label class="field">모둠 수<select id="t-n">${[2, 3, 4, 5, 6, 7, 8].map(n => `<option${n === 6 ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label class="field">모둠 이름(쉼표로 나누기, 비우면 1모둠·2모둠…)<input id="t-names" maxlength="80" placeholder="예: 산딸기, 도토리, 솔방울"></label>
+    <fieldset class="field t-src"><legend>낱말은 어디서?</legend>
+      <label><input type="radio" name="src" value="unit5" checked> 교과서 5단원 낱말</label>
+      <label><input type="radio" name="src" value="easy"> 쉬운 낱말 무작위</label>
+      <label><input type="radio" name="src" value="mine"> 선생님이 직접 적기</label></fieldset>
+    <label class="field t-mine" hidden>낱말(한 줄에 하나)<textarea id="t-words" rows="4" placeholder="갈무리&#10;미지&#10;먹었어요"></textarea></label>
+    <label class="check"><input type="checkbox" id="t-changed"> 바뀐 모양으로 내기(예: ‘먹었어요’ → 기본형 ‘먹다’를 찾아요)</label>
+    <div class="next-row"><button class="big-button leaf" data-team-start>게임 시작 ▸</button></div>`});
+  const mine = app.querySelector<HTMLElement>('.t-mine')!;
+  app.querySelectorAll<HTMLInputElement>('[name=src]').forEach(r => r.onchange = () => { mine.hidden = r.value !== 'mine' || !r.checked; });
+  app.querySelector<HTMLButtonElement>('[data-resume]')?.addEventListener('click', () => { team = loadTeam(); teamView(); });
+  app.querySelector<HTMLButtonElement>('[data-team-start]')!.onclick = () => {
+    const n = +app.querySelector<HTMLSelectElement>('#t-n')!.value;
+    const names = app.querySelector<HTMLInputElement>('#t-names')!.value.split(',').map(x => x.trim()).filter(Boolean);
+    const source = (app.querySelector<HTMLInputElement>('[name=src]:checked')!.value) as Team['source'];
+    const words = app.querySelector<HTMLTextAreaElement>('#t-words')!.value.split(/[\n,]+/).map(w => w.trim()).filter(w => w && (dict.has(w) || dict.baseForms(w).length));
+    if (source === 'mine' && !words.length) return toast('사전에서 찾을 수 있는 낱말을 적어 주세요.');
+    team = {teams: Array.from({length: n}, (_, i) => ({name: (names[i] ?? `${i + 1}모둠`).slice(0, 10), score: 0})), source, mine: words, changed: app.querySelector<HTMLInputElement>('#t-changed')!.checked, used: [], hint: 0, log: []};
+    nextTeamWord();
+  };
+}
+async function nextTeamWord() {
+  const t = team!;
+  let pool: string[] = t.source === 'mine' ? t.mine : t.source === 'unit5' ? [...new Set(UNIT5.flatMap(l => l.words ?? []))] : huntPool().map(r => bare(r.w));
+  pool = pool.filter(w => !t.used.includes(w));
+  if (!pool.length) { t.used = []; pool = t.source === 'mine' ? t.mine : pool; if (!pool.length) return teamEnd(); }
+  const pick = shuffle([...pool])[0];
+  const base = dict.has(pick) ? pick : dict.baseForms(pick)[0] ?? pick;
+  t.used.push(pick); t.word = base; t.ask = pick; t.sentence = undefined; t.winner = undefined; t.hint = 0; t.t0 = Date.now();
+  if (t.changed && pick === base) {
+    const r = mainRow(base), e = r ? await dict.entry(r.k).catch(() => null) : null;
+    const ch = e && (e.p === '동사' || e.p === '형용사') ? findChangedForm(e) : null;
+    if (ch) { t.ask = ch.form; t.sentence = ch.sentence; }
+  }
+  saveTeam(t); teamView();
+}
+async function teamView() {
+  const t = team!; if (!t.word) return nextTeamWord();
+  const r = mainRow(t.word), e = r ? await dict.entry(r.k).catch(() => null) : null;
+  const page = r ? pageOfK(r.k) + 1 : 0, cho = r ? CHO[split(bare(r.w)[0])?.cho ?? 0] : '';
+  const done = t.winner !== undefined, changed = t.ask !== t.word;
+  const hints = [`첫 자음은 ‘${cho}’`, `베리 종이 사전 ${Math.max(1, page - 3)}~${page + 3}쪽 사이`, `${bare(t.word).length}글자예요`];
+  frame({mode: 'team', left: `<div class="team-ask">
+      <span class="ribbon small">${changed ? '바뀐 모양이에요! 기본형을 찾아요' : '사전에서 찾으세요!'}</span>
+      <p class="team-word">${esc(t.ask ?? t.word)}</p>
+      ${t.sentence ? `<p class="ex"><span>${highlight(t.sentence, t.word)}</span></p>` : ''}
+      ${!done ? `<p class="team-timer timer" data-t0="${t.t0}">0초</p>` : ''}
+      ${!done ? `<div class="team-hints">${hints.slice(0, t.hint).map(h => `<span class="info-chip">${esc(h)}</span>`).join('')}${t.hint < 3 ? '<button class="more-btn" data-hint>힌트 하나 ▾</button>' : ''}</div>` : ''}
+      ${done && e ? `<div class="team-answer"><b>${esc(bare(e.w))}</b>${changed ? ` <em>(‘${esc(t.ask!)}’의 기본형)</em>` : ''} <span class="kind kind-${kindOf(e.p).color}">${esc(kindOf(e.p).kid)}</span><p>${esc(e.s[0].d)}</p><small>베리 종이 사전 ${page}쪽 · <a href="#w/${r!.k}" target="_blank" rel="noopener">낱말 쪽 열기</a></small></div>` : ''}
+    </div>`,
+  right: `<h3 class="ask">${!done ? '먼저 찾은 모둠을 눌러 주세요' : t.winner! >= 0 ? `<b>${esc(t.teams[t.winner!].name)}</b>이(가) 먼저 찾았어요!` : '이번 낱말은 아무도 못 찾았어요. 정답을 함께 봐요!'}</h3>
+    <div class="team-board">${t.teams.map((m, i) => `<button class="team-btn tc-${i % 6}${t.winner === i ? ' win' : ''}" data-team="${i}" ${done ? 'disabled' : ''}><b>${esc(m.name)}</b><span>${m.score}점</span></button>`).join('')}</div>
+    <div class="next-row">${done ? `<button class="big-button leaf" data-team-next>다음 낱말 ▸</button>${t.winner! >= 0 ? '<button class="big-button cream" data-team-undo>점수 되돌리기</button>' : ''}` : '<button class="big-button cream" data-team-skip>아무도 못 찾음 · 정답 보기</button>'}<button class="big-button honey" data-team-end>게임 끝내기</button></div>`});
+  app.querySelector<HTMLButtonElement>('[data-hint]')?.addEventListener('click', () => { t.hint++; saveTeam(t); chime(); teamView(); });
+  app.querySelectorAll<HTMLButtonElement>('[data-team]').forEach(b => b.onclick = () => { const i = +b.dataset.team!; t.teams[i].score++; t.winner = i; t.log.push(i); saveTeam(t); chime('ok'); confetti(); teamView(); });
+  app.querySelector<HTMLButtonElement>('[data-team-skip]')?.addEventListener('click', () => { t.winner = -1; saveTeam(t); teamView(); });
+  app.querySelector<HTMLButtonElement>('[data-team-undo]')?.addEventListener('click', () => { if (t.winner !== undefined && t.winner >= 0) { t.teams[t.winner].score--; t.log.pop(); } t.winner = undefined; t.t0 = Date.now(); saveTeam(t); teamView(); });
+  app.querySelector<HTMLButtonElement>('[data-team-next]')?.addEventListener('click', () => nextTeamWord());
+  app.querySelector<HTMLButtonElement>('[data-team-end]')!.onclick = () => teamEnd();
+}
+function teamEnd() {
+  const t = team ?? loadTeam(); if (!t) return teamSetup();
+  const rank = [...t.teams].sort((a, b) => b.score - a.score), top = rank[0]?.score ?? 0;
+  frame({mode: 'team', left: gameHead('모둠 사전 게임 결과', '[4국04-02]', `<b>${rank.filter(m => m.score === top).map(m => esc(m.name)).join(', ')}</b><br>최고 점수 ${top}점!<br>모두 사전 박사예요!`, 'bbo-cheer.png'),
+    right: `<ol class="team-rank">${rank.map((m, i) => `<li class="${m.score === top ? 'top' : ''}"><span>${i + 1}</span><b>${esc(m.name)}</b><em>${m.score}점</em></li>`).join('')}</ol>
+      <p class="tip-text">${img('ic-leaf.png', 'leaf')}<span>함께 찾은 낱말 ${t.used.length}개</span></p>
+      <div class="next-row"><button class="big-button leaf" data-team-new>새 게임</button><button class="big-button cream" data-team-back>이어서 더 하기</button></div>`});
+  confetti();
+  app.querySelector<HTMLButtonElement>('[data-team-new]')!.onclick = () => { saveTeam(null); team = null; teamSetup(); };
+  app.querySelector<HTMLButtonElement>('[data-team-back]')!.onclick = () => { team = t; t.winner !== undefined ? nextTeamWord() : teamView(); };
+}
 
 // ── 교과서 길: 국어 3-2 나 5단원 「사전으로 여는 세상」 13차시를 이 앱으로 ──
 const wordLink = (w: string) => { const base = dict.has(w) ? w : dict.baseForms(w)[0]; const r = base ? mainRow(base) : undefined; return r ? `<a class="rel-word" href="#w/${r.k}">${esc(w)}</a>` : ''; };
@@ -921,6 +1097,9 @@ async function route() {
   if (h.startsWith('read=')) return readPage(h.slice(5));
   if (h === 'unit5') return unit5Page();
   if (h.startsWith('unit5/')) return unit5Page(h.slice(6));
+  if (h === 'book') return bookView();
+  if (h.startsWith('book/')) { if (!openGame) return bookView(+h.slice(5) - 1); return; }
+  if (h === 'team') { team = null; return teamSetup(); }
   if (h === 'chart') return chartPage();
   if (h === 'stories') return storiesPage();
   if (h === 'mydict') return myDictPage();

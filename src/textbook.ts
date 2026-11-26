@@ -44,7 +44,7 @@ export const UNIT5: Lesson[] = [
   {id: '5', no: '5~6', title: '기준에 따라 낱말 분류하기', book: '국어 230~237쪽 · 국어활동 72~73쪽', act: '「낱말을 먹는 아이」', goal: '내가 기준을 정해 낱말을 나누어 봐요.', code: '[4국04-02]',
     go: [{to: 'play/sort-my', label: '내 기준으로 나누기', icon: I.sort}, {to: 'play/sort-tb', label: '교과서 낱말 바구니', icon: I.sort}], words: W.feel},
   {id: '7', no: '7~8', title: '국어사전에서 낱말을 찾는 방법 알기', book: '국어 238~241쪽 · 국어활동 74~75쪽', goal: '첫 자음자 → 모음자 → 받침 차례로 낱말을 찾아요.', code: '[4국04-02]',
-    go: [{to: 'chart', label: '사전 싣는 순서(붙임 11)', icon: I.order}, {to: 'play/order', label: '사전 차례 줄 세우기', icon: I.order}, {to: 'hunt', label: '사전 찾기 놀이', icon: I.hunt}], words: W.find},
+    go: [{to: 'chart', label: '사전 싣는 순서(붙임 11)', icon: I.order}, {to: 'team', label: '모둠 사전 게임(선생님 진행)', icon: I.hunt}, {to: 'book', label: '종이 사전처럼 넘겨 찾기', icon: I.book}, {to: 'play/open', label: '한 번에 펼치기 놀이', icon: I.book}, {to: 'play/order', label: '사전 차례 줄 세우기', icon: I.order}, {to: 'hunt', label: '사전 찾기 놀이', icon: I.hunt}], words: W.find},
   {id: '9', no: '9~10', title: '국어사전을 활용하며 글 읽기', book: '국어 242~247쪽 · 국어활동 74~75쪽', goal: '뜻을 먼저 짐작하고, 사전으로 확인하며 글을 읽어요.', code: '[4국04-02]',
     go: [{to: 'stories', label: '베리숲 읽기 글 고르기', icon: I.read}, {to: 'read', label: '선생님이 준 글 읽기', icon: I.read}], words: W.read},
   {id: '11', no: '11~12', title: '배운 내용 실천하기', book: '국어 248~250쪽 · 국어활동 76~83쪽', act: '세 가지 단서로 낱말 놀이 · 나만의 국어사전', goal: '단서 문제를 내고, 찾은 낱말로 나만의 국어사전을 만들어요.', code: '[4국04-02] [4국04-01]',
