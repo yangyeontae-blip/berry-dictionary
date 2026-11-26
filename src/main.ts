@@ -110,7 +110,9 @@ function wireSearch() {
   form.onsubmit = e => { e.preventDefault(); const q = input.value.trim(); if (!q) return; const exact = dict.same(q); if (exact.length) return goFirst(q); const r = dict.search(q, 1); if (r.length && !dict.baseForms(q).length) location.hash = 'w/' + r[0].k; else render(); };
   if (input.value) render();
 }
-function goFirst(w: string) { const s = dict.same(w); if (s.length) { chime(); location.hash = 'w/' + s[0].k; } }
+/** 같은 모양 낱말 중 아이가 찾는 낱말을 먼저: 접사·어미(배⁰, 손⁰)보다 쉬운 등급의 보통 낱말을 앞에 둔다. */
+function mainRow(w: string) { const s = dict.same(w); return s.find(r => r.lv && !['접사', '어미', '조사'].includes(r.p)) ?? s.find(r => !['접사', '어미'].includes(r.p)) ?? s[0]; }
+function goFirst(w: string) { const r = mainRow(w); if (r) { chime(); location.hash = 'w/' + r.k; } }
 const rowItem = (r: Row, cur?: number) => `<li><a href="#w/${r.k}" class="row${r.k === cur ? ' current' : ''}"><b>${esc(bare(r.w))}${dict.same(r.w).length > 1 ? `<sup>${r.n}</sup>` : ''}</b><span class="kind kind-${kindOf(r.p).color}">${esc(kindOf(r.p).kid)}</span>${r.lv ? `<span class="lv lv-${r.lv}">${LEVEL[r.lv]}</span>` : ''}</a></li>`;
 
 // ── 첫 화면 ──
@@ -158,7 +160,21 @@ function highlight(text: string, word: string) {
   const re = new RegExp('(' + esc(stem).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[가-힣]*)', 'g');
   return t.replace(re, '<mark>$1</mark>');
 }
-function wordCard(e: Entry, k: number) {
+/** 국어사전에서 얻는 정보 5가지(국어활동 75쪽, [4국04-02] 해설): 표기·발음·낱말 종류·뜻·쓰임(예문). */
+function infoStrip(e: Entry) {
+  const ex = e.s.reduce((n, s) => n + (s.x?.length ?? 0) + (s.t?.length ? 1 : 0), 0);
+  const chip = (ok: boolean, label: string, val: string, extra = '') => `<span class="info5-chip${ok ? '' : ' off'}"${extra}><b>${label}</b>${val}</span>`;
+  return `<div class="info5" aria-label="이 낱말에서 얻는 정보"><span class="info5-title">사전에서 얻는 정보</span>
+    ${chip(true, '표기', esc(bare(e.w)))}${chip(!!e.pr, '발음', e.pr ? `[${esc(e.pr.replace(/ː/g, ':'))}]` : '쓴 대로', ' role="button" tabindex="0" data-info-say')}${chip(true, '종류', esc(kindOf(e.p).kid.replace(/[을를] 나타내는 말$/, '')))}${chip(true, '뜻', `${e.s.length}개`)}${chip(ex > 0, '예문', `${ex}개`)}</div>`;
+}
+/** 모양이 같은 다른 낱말(배¹·배²)과 뜻이 여러 개인 낱말(다의어)을 구별해 보여 준다. */
+function sameShape(e: Entry, k: number, same: {k: number; n: number; d: string}[]) {
+  const w = esc(bare(e.w)), parts: string[] = [];
+  if (same.length > 1) parts.push(`<div class="same-box"><p><b>모양이 같은 낱말이 ${same.length}개</b> 있어요. 번호(어깨번호)가 다르면 <b>서로 다른 낱말</b>이에요.</p><div class="same-list">${same.map(x => `<a class="same-item${x.k === k ? ' on' : ''}" href="#w/${x.k}"><b>${w}<sup>${x.n}</sup></b><span>${esc(x.d.length > 26 ? x.d.slice(0, 26) + '…' : x.d)}</span></a>`).join('')}</div></div>`);
+  if (e.s.length > 1) parts.push(`<p class="poly-note">${img('ic-leaf.png', 'leaf')}<span>‘${w}’${same.length > 1 ? `<sup>${e.n}</sup>` : ''} 한 낱말에 <b>뜻이 ${e.s.length}개</b> 있어요. 글에서는 문장에 맞는 뜻 하나를 골라 읽어요.</span></p>`);
+  return parts.join('');
+}
+function wordCard(e: Entry, k: number, same: {k: number; n: number; d: string}[] = []) {
   const kind = kindOf(e.p), saved = inPouch(state, e.w, e.n), homonyms = dict.same(e.w).length > 1;
   const rels = (s: Entry['s'][number]) => RELATION.filter(([key]) => (s[key] as string[] | undefined)?.length).map(([key, label]) => `<div class="rel"><span class="rel-label rel-${String(key)}">${label}</span>${(s[key] as string[]).map(w => `<button class="rel-word" data-go="${esc(w)}">${esc(w)}</button>`).join('')}</div>`).join('');
   const quizSenses = e.s.map((s, i) => ({i, x: s.x?.[0]})).filter(q => q.x);
@@ -166,6 +182,8 @@ function wordCard(e: Entry, k: number) {
     <div class="card-tags"><span class="kind kind-${kind.color}">${esc(kind.kid)}</span><span class="pos">${esc(e.p || e.u)}</span>${e.lv ? `<span class="lv lv-${e.lv}">${LEVEL[e.lv]}</span>` : ''}</div>
     <h2 class="headword">${esc(bare(e.w))}${homonyms ? `<sup>${e.n}</sup>` : ''}${img('ic-sparkle.png', 'head-sparkle')}</h2>
     <div class="pron">${e.pr ? `<span>[${esc(e.pr.replace(/ː/g, ':'))}]</span>` : ''}<button class="speak" data-say="${esc(bare(e.w))}" aria-label="소리 듣기">${img('ic-speaker.png', 'speak-icon')}</button>${e.o ? `<span class="origin">한자 ${esc(e.o)}</span>` : ''}</div>
+    ${infoStrip(e)}
+    ${sameShape(e, k, same)}
     <div class="guess" hidden>
       <p>${img('bbo-think.png', 'guess-bbo')}<span>뜻을 먼저 짐작해 볼까요? 생각한 뜻을 적어 보세요.</span></p>
       <textarea maxlength="120" rows="2" placeholder="내가 짐작한 뜻"></textarea>
@@ -181,12 +199,16 @@ function wordCard(e: Entry, k: number) {
       ${quizSenses.length >= 2 ? `<button class="big-button cream" data-quiz>${img('ic-sparkle.png', 'btn-icon')}맞는 뜻 고르기</button>` : ''}
     </div>
     <div class="quiz" hidden></div>
+    <button class="big-button cream std-open" hidden>${img('ic-book.png', 'btn-icon')}표준국어대사전에서도 보기</button><div class="big-dict" hidden></div>
     ${sentenceBox(e, k)}
     ${e.a ? `<p class="note">${esc(e.a)}</p>` : ''}
   </article>`;
 }
 function wireCard(e: Entry, k: number) {
   wireSentence(e, k);
+  const big = app.querySelector<HTMLButtonElement>('.std-open');
+  if (big) { bigOn().then(on => { big.hidden = !on; }); big.onclick = () => bigDict(bare(e.w), big); }
+  app.querySelector<HTMLElement>('[data-info-say]')?.addEventListener('click', () => speak(bare(e.w)));
   app.querySelectorAll<HTMLButtonElement>('[data-say]').forEach(b => b.onclick = () => speak(b.dataset.say!));
   app.querySelectorAll<HTMLButtonElement>('.rel-word').forEach(b => b.onclick = () => { const s = dict.same(b.dataset.go!); if (s.length) { chime(); location.hash = 'w/' + s[0].k; } else toast('‘' + b.dataset.go + '’는 이 사전에 없어요.'); });
   const pouch = app.querySelector<HTMLButtonElement>('[data-pouch]')!;
@@ -216,6 +238,8 @@ function wireCard(e: Entry, k: number) {
 async function wordPage(k: number) {
   if (!(k >= 0 && k < dict.rows.length)) return home();
   const e = await dict.entry(k);
+  const sameRows = dict.same(e.w);
+  const same = sameRows.length > 1 ? await Promise.all(sameRows.slice(0, 6).map(async r => ({k: r.k, n: r.n, d: (await dict.entry(r.k).catch(() => null))?.s[0]?.d ?? ''}))) : [];
   const size = 10, {rows, start} = pageList(k, size), [g1, g2] = guideOf(rows);
   const steps = firstLetterSteps(e.w);
   frame({mode: 'word', tab: steps ? BASIC_CHO.find(c => c === steps.cho) ?? baseCho(steps.cho) : undefined,
@@ -223,7 +247,7 @@ async function wordPage(k: number) {
       ${searchBox()}
       <ol class="page-words">${rows.map(r => rowItem(r, k)).join('')}</ol>
       ${pageNav(start, size, 'w')}`,
-    right: `<div class="guide-words right"><span></span><span>${esc(bare(e.w))}${img('ic-leaf.png', 'leaf flip')}</span></div>${wordCard(e, k)}`});
+    right: `<div class="guide-words right"><span></span><span>${esc(bare(e.w))}${img('ic-leaf.png', 'leaf flip')}</span></div>${wordCard(e, k, same)}`});
   wireSearch(); wireCard(e, k);
   wireTurns(s => { location.hash = 'w/' + s; });
   app.querySelector('.page-right')?.scrollTo(0, 0);
@@ -569,12 +593,28 @@ async function bigDict(q: string, btn: HTMLButtonElement) {
   out.hidden = false; out.innerHTML = `<p class="tip-text">${img('bbo-magnify.png', 'hint-bbo')}큰 사전을 펼치는 중…</p>`;
   try {
     const res = await fetch(`${API}/api/stdict?q=${encodeURIComponent(q.slice(0, 20))}`);
-    const body = await res.json() as {off?: boolean; items?: {w: string; n: number; p: string; d: string}[]};
+    const body = await res.json() as {off?: boolean; items?: {w: string; n: number; p: string; d: string; i?: string}[]};
     if (body.off) { out.innerHTML = `<p class="tip-text">${img('bbo-sleep.png', 'hint-bbo')}더 큰 사전 연결은 아직 준비 중이에요. 선생님께 여쭤봐요!</p>`; return; }
     const items = body.items ?? [];
-    out.innerHTML = items.length ? `<div class="big-card"><span class="ribbon small">표준국어대사전에서 찾았어요</span><ol class="senses">${items.map((it, i) => `<li><span class="sense-no">${i + 1}</span><div><p class="def"><b>${esc(it.w)}${it.n ? `<sup>${it.n}</sup>` : ''}</b> <span class="pos">${esc(it.p)}</span></p><p class="def">${esc(it.d)}</p></div></li>`).join('')}</ol><p class="note">뜻 풀이: <a href="https://stdict.korean.go.kr" target="_blank" rel="noopener">표준국어대사전</a>(국립국어원). 어른용 사전이라 어려운 말이 나올 수 있어요.</p></div>`
+    out.innerHTML = items.length ? `<div class="big-card"><span class="ribbon small">표준국어대사전에서 찾았어요</span><ol class="senses">${items.map((it, i) => `<li><span class="sense-no">${i + 1}</span><div><p class="def"><b>${esc(it.w)}${it.n ? `<sup>${it.n}</sup>` : ''}</b> <span class="pos">${esc(it.p)}</span></p><p class="def">${esc(it.d)}</p>${it.i && items.findIndex(x => x.i === it.i) === i ? `<button class="more-btn" data-std-id="${esc(it.i)}">발음·예문·비슷한말 더 보기 ▾</button><div class="std-detail" hidden></div>` : ''}</div></li>`).join('')}</ol><p class="note">뜻 풀이: <a href="https://stdict.korean.go.kr" target="_blank" rel="noopener">표준국어대사전</a>(국립국어원). 어른용 사전이라 어려운 말이 나올 수 있어요.</p></div>`
       : `<p class="tip-text">${img('bbo-think.png', 'hint-bbo')}큰 사전에도 ‘${esc(q)}’는 없어요. 띄어쓰기나 글자를 살펴봐요.</p>`;
+    out.querySelectorAll<HTMLButtonElement>('[data-std-id]').forEach(b => b.onclick = () => stdDetail(b.dataset.stdId!, b));
   } catch { out.innerHTML = `<p class="tip-text">${img('bbo-sleep.png', 'hint-bbo')}큰 사전에 닿지 못했어요. 인터넷을 확인해 주세요.</p>`; btn.disabled = false; }
+}
+
+// 표준국어대사전 자세히 보기: 발음(표기와 다른 소리), 고유어·한자어, 뜻마다 예문과 관련어 — [4국04-02] 해설의 '표기, 발음, 품사, 의미, 용례'
+type StdWord = {word: string; wordType?: string; pronunciation?: string[]; senses: {pos: string; definition: string; examples: string[]; related?: {word: string}[]}[]};
+async function stdDetail(id: string, btn: HTMLButtonElement) {
+  const box = btn.nextElementSibling as HTMLDivElement;
+  if (!box.hidden) { box.hidden = true; btn.textContent = '발음·예문·비슷한말 더 보기 ▾'; return; }
+  box.hidden = false; btn.textContent = '접기 ▴'; box.innerHTML = '<p class="tip-text">펼치는 중…</p>';
+  try {
+    const w = await fetch(`${API}/api/stdict?id=${encodeURIComponent(id)}`).then(r => r.ok ? r.json() : Promise.reject()) as StdWord;
+    const pr = (w.pronunciation ?? []).filter(Boolean);
+    box.innerHTML = `<p class="std-line">${pr.length ? `<span class="info-chip">발음 [${esc(pr.join('/'))}]</span>${pr[0] !== bare(w.word) ? '<em>쓰는 것과 읽는 소리가 달라요!</em>' : ''}` : ''}${w.wordType ? `<span class="info-chip">${esc(w.wordType)}</span>` : ''}</p>
+      ${w.senses.slice(0, 4).map((s, j) => `<div class="std-sense"><b>${j + 1}</b> ${esc(s.definition)}${s.examples.slice(0, 2).map(x => `<p class="ex"><span class="ex-tag">예문</span><span>${esc(x)}</span></p>`).join('')}${s.related?.length ? `<div class="rel"><span class="rel-label">함께 보기</span>${s.related.map(r => `<button class="rel-word" data-go="${esc(r.word)}">${esc(r.word)}</button>`).join('')}</div>` : ''}</div>`).join('')}`;
+    box.querySelectorAll<HTMLButtonElement>('.rel-word').forEach(b => b.onclick = () => { const s = dict.same(b.dataset.go!); if (s.length) { chime(); location.hash = 'w/' + s[0].k; } else toast('‘' + b.dataset.go + '’는 베리 사전에 없어요. 찾기 칸에 넣어 큰 사전에서 찾아봐요.'); });
+  } catch { box.innerHTML = '<p class="tip-text">자세한 내용을 불러오지 못했어요.</p>'; }
 }
 
 // ── 앱으로 설치·오프라인 ──
@@ -704,7 +744,7 @@ const clock = (ms: number) => { const s = Math.floor(ms / 1000); return s >= 60 
 setInterval(() => { const t = document.querySelector('.timer'); if (t && hunt) t.textContent = clock(Date.now() - hunt.t0); }, 1000);
 
 // ── 교과서 길: 국어 3-2 나 5단원 「사전으로 여는 세상」 13차시를 이 앱으로 ──
-const wordLink = (w: string) => { const base = dict.has(w) ? w : dict.baseForms(w)[0]; const r = base ? dict.same(base)[0] : undefined; return r ? `<a class="rel-word" href="#w/${r.k}">${esc(w)}</a>` : ''; };
+const wordLink = (w: string) => { const base = dict.has(w) ? w : dict.baseForms(w)[0]; const r = base ? mainRow(base) : undefined; return r ? `<a class="rel-word" href="#w/${r.k}">${esc(w)}</a>` : ''; };
 const goHref = (to: string) => to.startsWith('list=') ? '#' + to : '#' + to;
 function unit5Page(id = '') {
   const cur: Lesson | null = id ? lessonOf(id) : null;

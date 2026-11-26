@@ -7,7 +7,7 @@ interface Env {
   DICT?: {fetch: (r: Request | string) => Promise<Response>};
   STDICT_KEY?: string;
 }
-type Item = {w: string; n: number; p: string; d: string};
+type Item = {w: string; n: number; p: string; d: string; i?: string}; // i: 표준국어대사전 낱말 번호(자세히 보기용)
 const CORS = {'access-control-allow-origin': '*', 'content-type': 'application/json; charset=utf-8'};
 const json = (body: unknown, status = 200, extra: Record<string, string> = {}) => new Response(JSON.stringify(body), {status, headers: {...CORS, ...extra}});
 
@@ -18,16 +18,16 @@ async function direct(key: string, q: string): Promise<Item[]> {
   const text = await (await fetch(api, {headers: {'user-agent': 'berry-dictionary'}})).text();
   const body = text.trim() ? JSON.parse(text) : {};
   const raw = body?.channel?.item ?? [];
-  return (Array.isArray(raw) ? raw : [raw]).flatMap((it: {word?: string; sup_no?: string; pos?: string; sense?: {definition?: string} | {definition?: string}[]}) =>
-    (Array.isArray(it.sense) ? it.sense : [it.sense]).filter(Boolean).map(s => ({w: String(it.word ?? '').replace(/[-^]/g, ''), n: Number(it.sup_no) || 0, p: String(it.pos ?? ''), d: String(s!.definition ?? '').replace(/<[^>]+>/g, '')})));
+  return (Array.isArray(raw) ? raw : [raw]).flatMap((it: {word?: string; sup_no?: string; pos?: string; target_code?: string; sense?: {definition?: string} | {definition?: string}[]}) =>
+    (Array.isArray(it.sense) ? it.sense : [it.sense]).filter(Boolean).map(s => ({w: String(it.word ?? '').replace(/[-^]/g, ''), n: Number(it.sup_no) || 0, p: String(it.pos ?? ''), d: String(s!.definition ?? '').replace(/<[^>]+>/g, ''), i: String(it.target_code ?? '')})));
 }
 
 // berry-dict 거쳐 부르기: {items:[{word, supNo, pos, senses[]}]} → 화면이 쓰는 {w,n,p,d}
 async function viaDict(dict: NonNullable<Env['DICT']>, q: string): Promise<Item[]> {
   const r = await dict.fetch(`https://berry-dict/api/search?q=${encodeURIComponent(q)}`);
   if (!r.ok) throw new Error('dict ' + r.status);
-  const body = await r.json() as {items?: {word: string; supNo: number; pos: string; senses: string[]}[]};
-  return (body.items ?? []).flatMap(it => it.senses.map(d => ({w: it.word, n: it.supNo, p: it.pos, d})));
+  const body = await r.json() as {items?: {id: string; word: string; supNo: number; pos: string; senses: string[]}[]};
+  return (body.items ?? []).flatMap(it => it.senses.map(d => ({w: it.word, n: it.supNo, p: it.pos, d, i: it.id})));
 }
 
 export default {
@@ -38,6 +38,13 @@ export default {
     const on = !!env.STDICT_KEY?.trim() || !!env.DICT;
     if (url.searchParams.has('status')) return json({on}, 200, {'cache-control': 'public, max-age=600'});
     if (!on) return json({off: true});
+    // 자세히 보기(발음·예문·관련어): berry-dict의 /api/word 를 그대로 넘긴다
+    const id = url.searchParams.get('id');
+    if (id !== null) {
+      if (!/^\d{1,10}$/.test(id) || !env.DICT) return json({error: 'bad id'}, 400);
+      const r = await env.DICT.fetch(`https://berry-dict/api/word?id=${id}`);
+      return json(await r.json(), r.status, r.ok ? {'cache-control': 'public, max-age=86400'} : {});
+    }
     const q = (url.searchParams.get('q') ?? '').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, '').trim().slice(0, 20);
     if (!q) return json({items: []});
     const cache = (caches as unknown as {default: Cache}).default, key = new Request('https://cache.berry-dictionary/stdict?q=' + encodeURIComponent(q));

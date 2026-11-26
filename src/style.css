@@ -472,3 +472,27 @@ img{user-select:none}
   .mydict-title{column-span:all;margin-bottom:6mm}
   .mydict-entry{break-inside:avoid}
 }
+
+/* ── 사전에서 얻는 정보 5가지 · 같은 모양 낱말 · 표준국어대사전 자세히 ── */
+.info5{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 12px;border-radius:16px;background:#fff7e3;border:2px dashed #e8c98c}
+.info5-title{flex:1 1 100%;font:700 14px var(--brand);color:#8a5a12}
+.info5-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px 4px 4px;border-radius:999px;background:#fff;border:2px solid #ecd3a3;font:600 15px var(--body)}
+.info5-chip b{padding:2px 8px;border-radius:999px;background:var(--honey);font:700 13px var(--brand);color:var(--ink)}
+.info5-chip.off{opacity:.55}
+.info5-chip[data-info-say]{cursor:pointer}
+.same-box{padding:12px 14px;border-radius:16px;background:var(--sky-soft);border:2px solid #b5d8ef}
+.same-box p{margin:0 0 8px;font-size:15.5px;line-height:1.5}
+.same-list{display:flex;flex-wrap:wrap;gap:8px}
+.same-item{display:grid;gap:2px;max-width:220px;padding:8px 12px;border-radius:14px;background:#fff;border:2px solid #cfe5f4;text-decoration:none}
+.same-item b{font:700 19px var(--brand)}
+.same-item span{font-size:13.5px;line-height:1.4;color:var(--ink-soft)}
+.same-item.on{border-color:var(--sky);box-shadow:0 0 0 3px #4f94c733}
+.poly-note{margin:0;display:flex;gap:6px;align-items:flex-start;font-size:15.5px;line-height:1.55;color:var(--leaf-dark)}
+.more-btn{margin-top:6px;padding:6px 14px;border-radius:999px;border:2px solid #b5d8ef;background:#fff;font:700 15px var(--brand);color:#2d6a96}
+.std-detail{margin-top:8px;display:grid;gap:8px}
+.std-line{margin:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.std-line em{font-style:normal;font:700 14px var(--brand);color:var(--berry-dark)}
+.info-chip{padding:3px 10px;border-radius:999px;background:var(--sky-soft);color:#2d6a96;font:700 14px var(--brand)}
+.std-sense{padding:10px 12px;border-radius:14px;background:#fff;border:1px solid #e3d3b0;font-size:16px;line-height:1.55}
+.std-sense>b{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:4px;border-radius:50%;background:var(--sky);color:#fff;font:700 13px var(--brand)}
+.std-open{justify-self:start}
