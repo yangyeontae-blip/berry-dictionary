@@ -9,13 +9,14 @@ export default {
     const url = new URL(req.url);
     if (url.pathname !== '/api/stdict') return env.ASSETS.fetch(req);
     if (req.method === 'OPTIONS') return new Response(null, {headers: {...CORS, 'access-control-allow-methods': 'GET'}});
-    if (url.searchParams.has('status')) return json({on: !!env.STDICT_KEY}, 200, {'cache-control': 'public, max-age=600'});
+    if (url.searchParams.has('status')) return json({on: !!env.STDICT_KEY?.trim()}, 200, {'cache-control': 'public, max-age=600'});
     if (!env.STDICT_KEY) return json({off: true});
     const q = (url.searchParams.get('q') ?? '').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, '').trim().slice(0, 20);
     if (!q) return json({items: []});
     const cache = (caches as unknown as {default: Cache}).default, key = new Request('https://cache.berry-dictionary/stdict?q=' + encodeURIComponent(q));
     const hit = await cache.match(key); if (hit) return hit;
-    const api = `https://stdict.korean.go.kr/api/search.do?key=${encodeURIComponent(env.STDICT_KEY)}&q=${encodeURIComponent(q)}&req_type=json&num=10`;
+    // 2026년 API 주소가 kdict.korean.go.kr/standard/api 로 바뀜. 키 끝에 보이지 않는 줄바꿈 문자가 붙으면 오류 없이 빈 응답이 오므로 trim.
+    const api = `https://kdict.korean.go.kr/standard/api/search.do?key=${encodeURIComponent(env.STDICT_KEY.trim())}&q=${encodeURIComponent(q)}&req_type=json&num=10`;
     try {
       const r = await fetch(api, {headers: {'user-agent': 'berry-dictionary'}});
       const text = await r.text();
