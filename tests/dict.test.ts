@@ -7,7 +7,8 @@ const load = () => new Dictionary(async p => JSON.parse(readFileSync('public/' +
 
 test('real data: search, initials, base forms and entries', async () => {
   const d = await load();
-  assert.ok(d.rows.length > 45000); // 초등용으로 거른 뒤(scripts/kid-filter.mjs)
+  assert.ok(d.rows.length > 20000); // 초등 6학년까지로 거른 뒤(scripts/kid-filter.mjs)
+  assert.ok(d.rows.every(r => r.g >= 1 || r.g === 0));
   const r = d.search('다정하다');
   assert.equal(r[0].w, '다정하다');
   const e = await d.entry(r[0].k);

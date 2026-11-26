@@ -2,8 +2,10 @@
 // 실행: node scripts/kid-filter.mjs [--dry]   (npm run data 가 원자료로 자료를 새로 만든 뒤에 이어서 돌린다)
 // 1) 성·마약·술·담배·도박·폭력·자살·욕설·낮잡는 말은 낱말째 뺀다(뜻풀이에 그런 내용이 있어도 뺀다).
 //    원자료의 '놀이에서 숨김'(x) 표시는 직장 낱말 등도 넓게 붙어 있어 빼는 기준으로 쓰지 않는다.
-// 2) 초등 6학년 수준: 국립국어원 학습 등급(초·중·고급)이 있는 낱말 + 등급이 없어도 고유어 낱말만 남긴다.
-//    교과서 낱말(src/textbook.ts)은 등급과 상관없이 남긴다.
+// 2) 초등 6학년 수준: 국립국어원 「국어 기초 어휘 선정 및 어휘 등급화 목록」(2023, 공공누리 제1유형)의
+//    1~4등급(학령 전~초등 5·6학년) 낱말만 남긴다(scripts/nikl-grade.json, build-grade.py로 만든다).
+//    속담·관용구는 등급 목록에 없어 한국어기초사전 초급·중급인 것만 남긴다. 교과서 낱말(src/textbook.ts)은 등급과 상관없이 남긴다.
+//    남긴 낱말에는 등급(g)을 index에 붙여 낱말 카드에 '초3~4 낱말'처럼 보여 준다.
 // 3) 남은 낱말의 예문·관련어에 뺀 낱말이 나오면 그 예문·관련어만 뺀다.
 import fs from 'node:fs';
 
@@ -14,6 +16,9 @@ const entries = [];
 for (let c = 0; c * idx.chunk < idx.words.length; c++) entries.push(...JSON.parse(fs.readFileSync(`${DIR}/e/${c}.json`, 'utf8')));
 if (entries.length !== idx.words.length) throw Error('index와 뜻 조각 수가 달라요');
 const bare = w => w.replace(/^-+|-+$/g, '');
+const GRADE = JSON.parse(fs.readFileSync('scripts/nikl-grade.json', 'utf8'));
+const gradeOf = w => GRADE[bare(w)] ?? GRADE[bare(w).replace(/\s+/g, '')] ?? 0;
+const MAX_GRADE = 4; // 4등급 = 초등 5·6학년
 
 // 낱말째 막는 목록: 뜻이 하나뿐인 어른 낱말만 적는다.
 // 뜻이 여럿인 모양(정부·고문·사정·년·술·질·첩·기생·시가…)은 여기 적지 않고, 아래 DEF_BAD로 어른 뜻만 뺀다.
@@ -47,14 +52,10 @@ const goodSenses = e => e.s.filter(s => !DEF_BAD.test(s.d));
 const isBad = e => BLOCK.has(bare(e.w)) || goodSenses(e).length === 0;
 const isKidLevel = e => {
   if (KEEP.has(bare(e.w))) return true;
-  if (e.u === '문법‧표현' || e.u === '') return false;
-  if (e.lv >= 1) return true;
-  if (e.u === '속담' || e.u === '관용구') return true; // 5~6학년 국어에서 속담·관용 표현을 배운다
-  if (e.u !== '단어') return false; // 등급 없는 구는 뺀다
-  // 등급 없는 낱말: 고유어는 남기고, 한자어·외래어는 줄기가 3글자 이하인 쉬운 낱말만(다정하다·은상·전교생은 남고 최대화하다·신속성 같은 말은 뺀다)
-  if (!e.o) return true;
-  const stem = bare(e.w).replace(/(하다|되다|시키다|스럽다|롭다|적|성|화)$/, '');
-  return stem.length <= 2 || (stem.length === 3 && !/(하다|되다|적|성|화)$/.test(bare(e.w)));
+  const g = gradeOf(e.w);
+  if (g >= 1 && g <= MAX_GRADE) return true;
+  if ((e.u === '속담' || e.u === '관용구') && (e.lv === 1 || e.lv === 2)) return true; // 5~6학년 국어에서 속담·관용 표현을 배운다
+  return false;
 };
 
 const keep = [], dropBad = [], dropLevel = [];
@@ -79,11 +80,13 @@ for (const w of ['창녀', '마약', '섹스', '포르노', '음경', '담배', 
 if (DRY) process.exit(0);
 
 // 다시 쓰기: 새 위치(k)로 index와 500낱말 조각을 만든다
-const words = keep.map(k => idx.words[k]); // 놀이에서 숨김 표시(x)는 그대로 둔다
-const newEntries = keep.map((k, i) => { const g = goodSenses(entries[k]); return {...entries[k], i, s: (g.length ? g : entries[k].s).map(cleanSense)}; }); // 교과서 낱말(KEEP)은 뜻이 다 걸려도 원래 뜻을 둔다
+// i(한국어기초사전 번호)는 원래 값을 그대로 둔다(번역 자료를 붙일 때 쓴다).
+// [낱말, 번호, 품사, 기초사전 등급, 놀이 숨김(x), 국어 기초 어휘 등급(g)]
+const words = keep.map(k => { const r = idx.words[k]; return [r[0], r[1], r[2], r[3], r[4] ?? 0, gradeOf(r[0])]; });
+const newEntries = keep.map(k => { const g = goodSenses(entries[k]); return {...entries[k], s: (g.length ? g : entries[k].s).map(cleanSense)}; }); // 교과서 낱말(KEEP)은 뜻이 다 걸려도 원래 뜻을 둔다
 fs.rmSync(`${DIR}/e`, {recursive: true, force: true}); fs.mkdirSync(`${DIR}/e`);
 for (let c = 0; c * idx.chunk < newEntries.length; c++) fs.writeFileSync(`${DIR}/e/${c}.json`, JSON.stringify(newEntries.slice(c * idx.chunk, (c + 1) * idx.chunk)));
-fs.writeFileSync(`${DIR}/index.json`, JSON.stringify({...idx, count: words.length, words, filter: 'kid-filter: 초등 수준·부적절 낱말 제외'}));
+fs.writeFileSync(`${DIR}/index.json`, JSON.stringify({...idx, count: words.length, words, filter: 'kid-filter: 국어 기초 어휘 1~4등급(초6까지)·부적절 낱말 제외'}));
 const pairsPath = `${DIR}/pairs.json`;
 if (fs.existsSync(pairsPath)) {
   const pairs = JSON.parse(fs.readFileSync(pairsPath, 'utf8'));
