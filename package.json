@@ -5,7 +5,7 @@
   "type": "module",
   "description": "베리의 숲 국어사전 — 초등 3학년이 국어사전 찾는 법을 놀이로 익히는 웹 사전",
   "scripts": {
-    "data": "python -I scripts/build-data.py",
+    "data": "python -I scripts/build-data.py && node scripts/kid-filter.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

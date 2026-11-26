@@ -2,6 +2,8 @@
 // 표준국어대사전 키는 berry-dict Worker에 비밀 값으로 들어 있다. 이 Worker는 서비스 바인딩(DICT)으로
 // berry-dict의 /api/search 를 불러 쓴다(키를 두 곳에 넣지 않으려고). 브라우저에는 키가 가지 않는다.
 // 이 Worker에 STDICT_KEY를 직접 넣으면 그 키로 직접 부른다.
+import {badQuery, badText} from './kidsafe';
+
 interface Env {
   ASSETS: {fetch: (r: Request) => Promise<Response>};
   DICT?: {fetch: (r: Request | string) => Promise<Response>};
@@ -43,15 +45,20 @@ export default {
     if (id !== null) {
       if (!/^\d{1,10}$/.test(id) || !env.DICT) return json({error: 'bad id'}, 400);
       const r = await env.DICT.fetch(`https://berry-dict/api/word?id=${id}`);
-      return json(await r.json(), r.status, r.ok ? {'cache-control': 'public, max-age=86400'} : {});
+      const w = await r.json() as {word?: string; senses?: {definition: string; examples: string[]; related?: {word: string}[]}[]};
+      // 초등학생용: 어른 낱말이면 아무것도 주지 않고, 어른 뜻·예문·관련어는 뺀다(worker/kidsafe.ts)
+      if (!r.ok || !w.word || badQuery(w.word)) return json({error: 'not found'}, 404);
+      w.senses = (w.senses ?? []).filter(s => !badText(s.definition)).map(s => ({...s, examples: s.examples.filter(x => !badText(x)), related: s.related?.filter(x => !badQuery(x.word))}));
+      if (!w.senses.length) return json({error: 'not found'}, 404);
+      return json(w, 200, {'cache-control': 'public, max-age=86400'});
     }
     const q = (url.searchParams.get('q') ?? '').replace(/[^가-힣ㄱ-ㅎㅏ-ㅣ\s-]/g, '').trim().slice(0, 20);
-    if (!q) return json({items: []});
-    const cache = (caches as unknown as {default: Cache}).default, key = new Request('https://cache.berry-dictionary/stdict2?q=' + encodeURIComponent(q));
+    if (!q || badQuery(q)) return json({items: []}); // 어른 낱말은 찾아 주지 않는다
+    const cache = (caches as unknown as {default: Cache}).default, key = new Request('https://cache.berry-dictionary/stdict3?q=' + encodeURIComponent(q));
     const hit = await cache.match(key); if (hit) return hit;
     try {
       const all = env.STDICT_KEY?.trim() ? await direct(env.STDICT_KEY, q) : await viaDict(env.DICT!, q);
-      const items = all.filter(x => x.d).slice(0, 8);
+      const items = all.filter(x => x.d && !badText(x.d) && !badQuery(x.w)).slice(0, 8);
       const res = json({items}, 200, items.length ? {'cache-control': 'public, max-age=86400'} : {});
       if (items.length) ctx.waitUntil(cache.put(key, res.clone()));
       return res;
