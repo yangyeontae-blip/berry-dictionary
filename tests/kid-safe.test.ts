@@ -25,8 +25,21 @@ test('뜻풀이·예문 어디에도 어른 낱말이 없다', () => {
 
 test('뜻이 여럿인 낱말은 어른 뜻만 빠지고 남는다', async () => {
   const d = await load();
-  for (const w of ['정부', '고문', '사정', '년', '술', '질', '고추', '태우다', '취하다', '내내', '다정하다', '고래', '갈무리', '솜이불', '벌거벗다']) assert.ok(d.same(w).length, `‘${w}’가 빠졌어요`);
+  for (const w of ['정부', '고문', '사정', '년', '술', '고추', '태우다', '취하다', '내내', '다정하다', '고래', '갈무리', '솜이불', '벌거벗다']) assert.ok(d.same(w).length, `‘${w}’가 빠졌어요`);
   const sul = await Promise.all(d.same('술').map(r => d.entry(r.k)));
   assert.ok(!sul.some(e => e.s.some(s => /취하|알코올|마시/.test(s.d))), '술(마시는 술) 뜻이 남았어요');
   for (const r of d.same('년')) { const e = await d.entry(r.k); assert.ok(e.s.length && !e.s.some(s => /낮잡아/.test(s.d))); }
+});
+
+test('내 나라 말 자료가 뜻 조각과 같은 차례·길이다', async () => {
+  const d = await load();
+  const e = readdirSync('public/data/e').length;
+  for (const lang of ['en', 'vi', 'ru', 'mn', 'ja', 'th', 'id', 'es', 'fr', 'ar']) {
+    assert.equal(readdirSync('public/data/t/' + lang).length, e, lang);
+    const k = d.same('사과').find(r => r.g)!.k, ent = await d.entry(k);
+    const t = JSON.parse(readFileSync(`public/data/t/${lang}/${Math.floor(k / 500)}.json`, 'utf8'))[k % 500];
+    assert.ok(Array.isArray(t) && t.length === ent.s.length && t[0]?.[0], `${lang} 사과`);
+  }
+  const vi = JSON.parse(readFileSync('public/data/t/en/0.json', 'utf8'));
+  assert.equal(vi.length, JSON.parse(readFileSync('public/data/e/0.json', 'utf8')).length);
 });

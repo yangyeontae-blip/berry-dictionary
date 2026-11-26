@@ -1,5 +1,5 @@
 import './style.css';
-import {Dictionary, KIND, RELATION, LEVEL, type Entry, type Row} from './dict';
+import {Dictionary, KIND, RELATION, LEVEL, GRADE_NAME, LANGS, type Entry, type Row} from './dict';
 import {BASIC_CHO, CHO, JUNG, JONG, split, join, bare, firstLetterSteps} from './hangul';
 import {loadState, saveState, inPouch, togglePouch, stampFound, encodeList, decodeList, daySeed, type Saved} from './store';
 import {pickHuntTargets, findChangedForm, type HuntTarget} from './hunt';
@@ -10,6 +10,8 @@ import {UNIT5, lessonOf, ORDER_CHART, TEXTBOOK_SORT, STORIES, WRAP_QUIZ, clueOf,
 const ART = import.meta.env.BASE_URL + 'art/';
 const app = document.getElementById('app')!;
 const dict = new Dictionary();
+/** 보기 설정 창 */
+const dialog = document.createElement('dialog'); dialog.className = 'view-dialog'; document.body.append(dialog);
 const state = loadState();
 const save = () => saveState(state);
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]!));
@@ -75,7 +77,8 @@ function frame(v: View) {
   app.innerHTML = `
   <div class="scene" data-mode="${v.mode}">
     <header class="sign"><a href="#" class="sign-board" aria-label="첫 화면으로">${img('sign.png', 'sign-art')}<span class="sign-title">베리의 숲 국어사전</span></a>
-      <button class="sound-toggle" aria-pressed="${state.sound}" aria-label="효과음 ${state.sound ? '끄기' : '켜기'}">${state.sound ? '🔔' : '🔕'}</button></header>
+      <button class="sound-toggle" aria-pressed="${state.sound}" aria-label="효과음 ${state.sound ? '끄기' : '켜기'}">${state.sound ? '🔔' : '🔕'}</button>
+      <button class="view-toggle" aria-haspopup="dialog" aria-label="보기 설정: 글씨 크기, 고대비, 내 나라 말">가<small>A</small></button></header>
     <div class="chip-strip" aria-label="첫 자음으로 펼치기">${BASIC_CHO.map((c, i) => `<button class="tab${c === v.tab ? ' on' : ''}" style="--tab:${TAB_COLORS[i % 7]}" data-cho="${c}">${c}</button>`).join('')}</div>
     <main class="book">
       ${tabs(LEFT_TABS, 'left', v.tab)}
@@ -88,6 +91,7 @@ function frame(v: View) {
   </div>`;
   app.querySelectorAll<HTMLButtonElement>('[data-cho]').forEach(b => b.onclick = () => { chime(); location.hash = 'browse/' + b.dataset.cho; });
   app.querySelector<HTMLButtonElement>('.sound-toggle')!.onclick = () => { state.sound = !state.sound; save(); route(); };
+  app.querySelector<HTMLButtonElement>('.view-toggle')!.onclick = () => viewPanel();
   app.querySelector<HTMLButtonElement>('.install')?.addEventListener('click', install);
 }
 const searchBox = (value = '') => `<form class="search" role="search"><label class="sr" for="q">낱말 찾기</label><input id="q" name="q" autocomplete="off" enterkeyhint="search" placeholder="궁금한 낱말을 찾아보세요" value="${esc(value)}"><button aria-label="찾기">${img('ic-magnify.png', 'search-icon')}</button></form><div class="search-results" hidden></div>`;
@@ -180,7 +184,7 @@ function wordCard(e: Entry, k: number, same: {k: number; n: number; d: string}[]
   const rels = (s: Entry['s'][number]) => RELATION.filter(([key]) => (s[key] as string[] | undefined)?.length).map(([key, label]) => `<div class="rel"><span class="rel-label rel-${String(key)}">${label}</span>${(s[key] as string[]).map(w => `<button class="rel-word" data-go="${esc(w)}">${esc(w)}</button>`).join('')}</div>`).join('');
   const quizSenses = e.s.map((s, i) => ({i, x: s.x?.[0]})).filter(q => q.x);
   return `<article class="word-card">
-    <div class="card-tags"><span class="kind kind-${kind.color}">${esc(kind.kid)}</span><span class="pos">${esc(e.p || e.u)}</span>${e.lv ? `<span class="lv lv-${e.lv}">${LEVEL[e.lv]}</span>` : ''}</div>
+    <div class="card-tags"><span class="kind kind-${kind.color}">${esc(kind.kid)}</span><span class="pos">${esc(e.p || e.u)}</span>${dict.rows[k]?.g ? `<span class="grade g-${dict.rows[k].g}" title="국립국어원 국어 기초 어휘 등급">${GRADE_NAME[Math.min(5, dict.rows[k].g)]} 낱말</span>` : ''}</div>
     <h2 class="headword">${esc(bare(e.w))}${homonyms ? `<sup>${e.n}</sup>` : ''}${img('ic-sparkle.png', 'head-sparkle')}</h2>
     <div class="pron">${e.pr ? `<span>[${esc(e.pr.replace(/ː/g, ':'))}]</span>` : ''}<button class="speak" data-say="${esc(bare(e.w))}" aria-label="소리 듣기">${img('ic-speaker.png', 'speak-icon')}</button>${e.o ? `<span class="origin">한자 ${esc(e.o)}</span>` : ''}</div>
     ${infoStrip(e)}
@@ -207,6 +211,7 @@ function wordCard(e: Entry, k: number, same: {k: number; n: number; d: string}[]
 }
 function wireCard(e: Entry, k: number) {
   wireSentence(e, k);
+  if (state.lang) showTranslation(k);
   const big = app.querySelector<HTMLButtonElement>('.std-open');
   if (big) { bigOn().then(on => { big.hidden = !on; }); big.onclick = () => bigDict(bare(e.w), big); }
   app.querySelector<HTMLElement>('[data-info-say]')?.addEventListener('click', () => speak(bare(e.w)));
@@ -621,6 +626,36 @@ async function stdDetail(id: string, btn: HTMLButtonElement) {
   } catch { box.innerHTML = '<p class="tip-text">자세한 내용을 불러오지 못했어요.</p>'; }
 }
 
+// ── 보기 설정: 글씨 크기 3단계, 고대비, 내 나라 말(다문화 학생) ──
+function applyView() {
+  const d = document.documentElement;
+  d.dataset.font = String(state.font || 0);
+  d.dataset.contrast = state.contrast ? 'on' : 'off';
+}
+async function showTranslation(k: number) {
+  const items = app.querySelectorAll<HTMLElement>('.senses > li');
+  try {
+    const tr = await dict.translation(k, state.lang);
+    const name = LANGS.find(([c]) => c === state.lang)?.[1] ?? '';
+    items.forEach((li, i) => { const t = tr[i]; if (!t) return; li.querySelector('div')!.insertAdjacentHTML('beforeend', `<p class="trans" lang="${state.lang}" dir="${state.lang === 'ar' ? 'rtl' : 'ltr'}"><span class="trans-tag">${esc(name)}</span><b>${esc(t[0])}</b> ${esc(t[1])}</p>`); });
+  } catch { /* 번역 조각을 못 받아도 뜻은 그대로 */ }
+}
+function viewPanel() {
+  const opt = (v: string | number, label: string, on: boolean, name: string) => `<button class="view-opt${on ? ' on' : ''}" data-${name}="${v}" aria-pressed="${on}">${label}</button>`;
+  dialog.innerHTML = `<form method="dialog" class="view-panel"><h2 class="page-title">보기 설정</h2>
+    <h3 class="ask">글씨 크기</h3><div class="view-row">${['보통', '크게', '아주 크게'].map((l, i) => opt(i, `<span style="font-size:${16 + i * 4}px">가</span> ${l}`, (state.font || 0) === i, 'font')).join('')}</div>
+    <h3 class="ask">눈이 편한 화면</h3><div class="view-row">${opt(0, '보통 화면', !state.contrast, 'contrast')}${opt(1, '또렷한 화면(고대비)', !!state.contrast, 'contrast')}</div>
+    <h3 class="ask">내 나라 말로 뜻 보기</h3><p class="tip-text"><span>한국어 뜻 아래에 내 나라 말 뜻이 함께 나와요. (국립국어원 한국어기초사전)</span></p>
+    <div class="view-row langs">${opt('', '한국어만', !state.lang, 'lang')}${LANGS.map(([c, l]) => opt(c, l, state.lang === c, 'lang')).join('')}</div>
+    <button class="big-button leaf" value="close">다 했어요</button></form>`;
+  const set = () => { save(); applyView(); viewPanel(); };
+  dialog.querySelectorAll<HTMLButtonElement>('[data-font]').forEach(b => b.onclick = e => { e.preventDefault(); state.font = +b.dataset.font!; set(); });
+  dialog.querySelectorAll<HTMLButtonElement>('[data-contrast]').forEach(b => b.onclick = e => { e.preventDefault(); state.contrast = b.dataset.contrast === '1'; set(); });
+  dialog.querySelectorAll<HTMLButtonElement>('[data-lang]').forEach(b => b.onclick = e => { e.preventDefault(); state.lang = b.dataset.lang!; set(); });
+  dialog.onclose = () => route();
+  if (!dialog.open) dialog.showModal();
+}
+
 // ── 앱으로 설치·오프라인 ──
 let installEvt: (Event & {prompt: () => Promise<void>}) | null = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e as typeof installEvt; const f = app.querySelector('.credit'); if (f && !f.querySelector('.install')) { f.insertAdjacentHTML('beforeend', ' · <button class="install">앱으로 설치</button>'); f.querySelector<HTMLButtonElement>('.install')!.onclick = install; } });
@@ -748,10 +783,10 @@ const clock = (ms: number) => { const s = Math.floor(ms / 1000); return s >= 60 
 setInterval(() => { const t = document.querySelector<HTMLElement>('.timer'); if (!t) return; const t0 = t.dataset.t0 ? +t.dataset.t0 : hunt?.t0; if (t0) t.textContent = clock(Date.now() - t0); }, 1000);
 
 // ── 종이 사전 모드: 쪽을 넘기고, 자음 색인을 잡고, 옆면을 훑어 펼치는 사전(7~8차시) ──
-// 쉬움·보통 등급 낱말만 한 쪽에 8개씩 담아 실제 초등 사전처럼 1,300여 쪽이 된다. 가로 화면은 두 쪽, 세로 화면은 한 쪽.
+// 초등 6학년까지의 낱말(국어 기초 어휘 1~4등급)을 한 쪽에 8개씩 담는다. 가로 화면은 두 쪽, 세로 화면은 한 쪽.
 const PER_PAGE = 8;
 let bookRowsCache: Row[] | null = null;
-const bookRows = () => bookRowsCache ??= dict.rows.filter(r => r.lv && !r.x && !/^-|-$/.test(r.w) && !['접사', '어미', '조사'].includes(r.p));
+const bookRows = () => bookRowsCache ??= dict.rows.filter(r => !r.x && !/^-|-$/.test(r.w) && !['접사', '어미', '조사'].includes(r.p));
 const bookPages = () => Math.ceil(bookRows().length / PER_PAGE);
 const narrow = () => matchMedia('(max-width: 980px)').matches;
 /** 사전 위치 k가 실린 쪽(0부터). k가 책에 없으면 그 앞 낱말이 실린 쪽. */
@@ -1108,6 +1143,7 @@ async function route() {
   if (h.startsWith('play/')) return playGame(h.slice(5));
   return home();
 }
+applyView();
 app.innerHTML = `<div class="loading">${img('bbo-read.png', 'loading-bbo')}<p>사전을 펼치는 중…</p></div>`;
 dict.load().then(() => { window.addEventListener('hashchange', () => { if (!location.hash.startsWith('#hunt')) hunt = location.hash.startsWith('#list=') ? hunt : null; route(); }); route(); })
   .catch(() => { app.innerHTML = `<div class="loading">${img('bbo-sleep.png', 'loading-bbo')}<p>사전을 펼치지 못했어요. 인터넷을 확인하고 새로고침해 주세요.</p></div>`; });

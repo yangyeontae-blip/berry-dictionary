@@ -580,3 +580,35 @@ img{user-select:none}
   .page{padding:16px 22px 18px}
   .menu{gap:6px}.menu-item{padding:3px 12px 3px 6px;font-size:15px}.menu-icon{width:24px;height:24px}
 }
+.grade{display:inline-block;padding:3px 10px;border-radius:999px;font:700 13px var(--brand);background:#eef6e4;color:var(--leaf-dark);border:1px solid #cfe3b0}
+.grade.g-1,.grade.g-2{background:#fff4d6;color:#8a5a12;border-color:#f0d9a0}.grade.g-4{background:#efe5fb;color:#6a44a0;border-color:#d9c8f2}
+
+/* ── 보기 설정: 글씨 크기 · 고대비 · 내 나라 말 ── */
+.view-toggle{position:absolute;right:-108px;top:50%;translate:0 -50%;width:46px;height:46px;border-radius:50%;border:3px solid var(--honey);background:var(--paper);font:700 18px/1 var(--brand);color:var(--ink);box-shadow:0 3px 0 var(--honey-dark)}
+.view-toggle small{font-size:11px}
+@media (max-width:980px){.view-toggle{right:6px;top:auto;bottom:-6px;translate:none;width:40px;height:40px;font-size:15px}.sound-toggle{right:52px}}
+.view-dialog{border:0;border-radius:24px;padding:0;max-width:min(640px,94vw);max-height:90dvh;background:var(--paper);box-shadow:0 20px 60px #0006}
+.view-dialog::backdrop{background:#2a1a0a88}
+.view-panel{display:grid;gap:6px;padding:22px 24px}
+.view-panel .ask{font-size:20px;margin:10px 0 4px}
+.view-row{display:flex;flex-wrap:wrap;gap:8px}
+.view-opt{min-height:48px;padding:8px 16px;border-radius:999px;border:3px solid #ecd3a3;background:#fff;font:700 17px var(--brand);color:var(--ink)}
+.view-opt.on{background:var(--leaf);border-color:var(--leaf-dark);color:#fff}
+.view-row.langs .view-opt{font:600 16px var(--body)}
+.trans{margin:8px 0 0;padding:8px 12px;border-radius:12px;background:var(--sky-soft);font-size:16px;line-height:1.5;color:#1f4f73}
+.trans b{margin-right:6px}
+.trans-tag{display:inline-block;margin-right:8px;padding:1px 8px;border-radius:999px;background:#fff;font:700 12px var(--brand);color:#2d6a96;vertical-align:1px}
+/* 글씨 크기: 책 쪽 안의 글만 키운다(틀은 화면 높이에 맞는 그대로) */
+html[data-font="1"] .page{zoom:1.15}
+html[data-font="2"] .page{zoom:1.32}
+html[data-font="1"] .view-dialog{zoom:1.1}html[data-font="2"] .view-dialog{zoom:1.2}
+/* 고대비: 종이 무늬·옅은 색을 걷어 내고 진한 글자와 굵은 테두리로 */
+html[data-contrast="on"]{--ink:#000;--ink-soft:#1a1a1a;--paper:#fff;--paper-2:#fff;--leaf-dark:#1f4d0f;--berry-dark:#8a0f33;--stone:#333}
+html[data-contrast="on"] body{background:#1d2a14}
+html[data-contrast="on"] .page{background:#fff;box-shadow:none;border:3px solid #000}
+html[data-contrast="on"] .row,html[data-contrast="on"] .senses>li,html[data-contrast="on"] .paper-word,html[data-contrast="on"] .word-chip,html[data-contrast="on"] .choice,html[data-contrast="on"] .big-button.cream,html[data-contrast="on"] .rel-word{border-color:#000!important;background:#fff;color:#000}
+html[data-contrast="on"] .ex,html[data-contrast="on"] .tip-text,html[data-contrast="on"] .paper-def,html[data-contrast="on"] .trans{color:#000;background:#fff;border:2px solid #000}
+html[data-contrast="on"] .kind,html[data-contrast="on"] .grade,html[data-contrast="on"] .info5-chip{background:#fff;color:#000;border:2px solid #000}
+html[data-contrast="on"] :focus-visible{outline:4px solid #ffbf00;outline-offset:2px}
+.view-dialog{overflow:auto}
+.view-panel .big-button{justify-self:start;min-width:max-content;margin-top:12px}

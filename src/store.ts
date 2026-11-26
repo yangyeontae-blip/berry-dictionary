@@ -2,9 +2,10 @@
 const KEY = 'berry-dictionary-v1';
 /** my: 내가 지은 문장, ctx·sense: 글 속에서 찾은 문장과 고른 뜻(낱말 공책). */
 export type Saved = {w: string; n: number; k: number; at: number; my?: string; ctx?: string; sense?: string};
-export type State = {pouch: Saved[]; stamps: number; found: string[]; sound: boolean; guesses: number; games: number; notes: number; best: number};
+/** font: 글씨 크기(0 보통·1 크게·2 아주 크게), contrast: 고대비, lang: 내 나라 말 뜻(en·vi·ru·mn·ja·th·id·es·fr·ar, ''이면 끔). */
+export type State = {pouch: Saved[]; stamps: number; found: string[]; sound: boolean; guesses: number; games: number; notes: number; best: number; font: number; contrast: boolean; lang: string};
 
-const blank = (): State => ({pouch: [], stamps: 0, found: [], sound: true, guesses: 0, games: 0, notes: 0, best: 0});
+const blank = (): State => ({pouch: [], stamps: 0, found: [], sound: true, guesses: 0, games: 0, notes: 0, best: 0, font: 0, contrast: false, lang: ''});
 
 export function loadState(storage: Pick<Storage, 'getItem'> | null = safeStorage()): State {
   try {
