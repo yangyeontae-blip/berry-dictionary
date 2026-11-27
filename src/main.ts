@@ -819,8 +819,13 @@ async function bookView(pg = bookAt) {
   frame({mode: g ? 'play-open' : 'book', left: '', right: ''});
   const book = app.querySelector<HTMLElement>('.book')!;
   book.classList.add('paper-book'); if (one) book.classList.add('one');
-  book.querySelector('.page-left')!.innerHTML = head + (one ? edge(pg, last, thick) : '') + left;
-  book.querySelector('.page-right')!.innerHTML = one ? '' : edge(pg, last, thick) + right;
+  book.querySelector('.paper-bar')?.remove();
+  if (one) book.querySelector('.page-left')!.innerHTML = head + edge(pg, last, thick) + left;
+  else {
+    book.querySelector('.page-left')!.innerHTML = left;
+    book.querySelector('.page-right')!.innerHTML = right;
+    book.insertAdjacentHTML('afterbegin', `<div class="paper-bar">${head}${edge(pg, last, thick)}</div>`);
+  }
   book.style.setProperty('--thick-l', String(thick)); book.style.setProperty('--thick-r', String(100 - thick));
   const go = (to: number, dir = to > bookAt ? 'next' : 'prev') => { chime(); book.classList.add('turn-' + dir); setTimeout(() => { if (openGame && !openGame.opened) settle(to); else bookView(to); }, 180); };
   const settle = (to: number) => { const gg = openGame!; const d = Math.abs(pageOfK(gg.targets[gg.i].k) - to); gg.scores[gg.i] = Math.max(0, Math.round(100 * (1 - d / 60))); gg.opened = true; bookView(to); };

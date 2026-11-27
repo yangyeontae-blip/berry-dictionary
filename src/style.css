@@ -612,3 +612,21 @@ html[data-contrast="on"] .kind,html[data-contrast="on"] .grade,html[data-contras
 html[data-contrast="on"] :focus-visible{outline:4px solid #ffbf00;outline-offset:2px}
 .view-dialog{overflow:auto}
 .view-panel .big-button{justify-self:start;min-width:max-content;margin-top:12px}
+
+/* ── 종이 사전: 넘김 띠는 두 쪽 위에 한 줄로, 두 쪽은 같은 높이·같은 줄 ── */
+.paper-book:not(.one){grid-template-rows:auto minmax(0,1fr)}
+.paper-bar{grid-column:1/-1;display:grid;gap:4px;margin:0 0 8px;padding:6px 12px;border-radius:16px;background:#fff8e8e6;box-shadow:0 2px 0 #d9b77d}
+.paper-bar .paper-nav{margin:0}.paper-bar .edge-tip{margin:0;justify-content:center}
+.paper-bar .open-head{margin:0}
+.paper-book .page{overflow:hidden}
+.paper-book.one .page{overflow:auto}
+.paper-page{display:flex;flex-direction:column;gap:6px;height:100%;min-height:0}
+.paper-words{flex:1;min-height:0;grid-template-rows:repeat(8,minmax(0,1fr));gap:2px}
+.paper-word{min-width:0;overflow:hidden;align-content:center;padding:4px 10px}
+.paper-def{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.paper-no{flex:none}
+@media (min-width:981px) and (max-height:820px){.paper-word b{font-size:17px}.paper-def{font-size:13px}.paper-book .page{padding:10px 18px 8px}.paper-bar{padding:4px 10px;margin-bottom:6px}.paper-bar .flip-btn{width:38px;height:38px}.paper-bar .edge-range{height:28px}.edge-range::-webkit-slider-thumb{height:36px}}
+@media (min-width:981px) and (max-height:860px){.paper-word{grid-template-columns:auto auto minmax(0,1fr);align-items:center;padding:2px 8px}.paper-word .paper-def{grid-column:auto}.paper-bar .edge-tip{font-size:12.5px}}
+.paper-words{grid-template-rows:repeat(8,minmax(min-content,1fr))}.paper-book .page{overflow:auto}
+.paper-bar .open-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}.paper-bar .open-head .bubble{flex:1 1 320px;margin:0;padding:6px 14px;font-size:16px}.paper-bar .open-target{font-size:20px}.paper-bar .open-score{font-size:16px}.paper-bar .open-head .next-row{flex:none}.paper-bar .open-head .next-row .big-button{padding:8px 18px;font-size:17px;min-height:0}
+@media (min-width:981px){.scene[data-mode=play-open] .paper-word{grid-template-columns:auto auto minmax(0,1fr);align-items:center;padding:2px 8px}.scene[data-mode=play-open] .paper-def{grid-column:auto}}
